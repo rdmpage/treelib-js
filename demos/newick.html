@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Newick Viewer</title>
+	<style type="text/css" title="text/css">
+	/*	@import url("http://bl.ocks.org/style.css?20120730"); */
+		body { font-family: sans-serif; }
+	</style>
+	<script src="jquery.js"></script>
+    <script type="text/javascript" src="jquery-svgpan.min.js"></script>
+
+	<script src="../treelib.js"></script>	
+</head>
+<body>
+	<h1>Newick Viewer</h1>
+	
+	<p><b>Paste in a <a href="http://en.wikipedia.org/wiki/Newick_format">Newick-format</a> tree description</b></p>
+	<div>
+	<textarea id="newick" rows="10" cols=100">
+((((((((219923430:0.046474,219923429:0.009145):0.037428,219923426:0.038397):0.015434,(219923419:0.022612,219923420:0.015561):0.050529):0.004828,(207366059:0.020922,207366058:0.016958):0.038734):0.003901,219923422:0.072942):0.005414,((219923443:0.038239,219923444:0.025617):0.037592,(219923423:0.056081,219923421:0.055808):0.003788):0.009743):0.001299,(219923469:0.072965,125629132:0.044638):0.012516):0.011647,(((((219923464:0.069894,((((((125628927:0.021470,219923456:0.021406):0.003083,219923455:0.021625):0.029147,219923428:0.042785):0.001234,225685777:0.037478):0.016027,((((56549933:0.003265,219923453:-0.000859):0.015462,150371743:0.009558):0.004969,219923452:0.014401):0.024398,((((((150371732:0.001735,((150371733:0,150371736:0):6.195e-05,150371735:-6.195e-05):7.410e-05):0.000580,150371734:0.001196):0.000767,(150371737:0.001274,(150371738:0,150371740:0):0.000551):0.000498):0.000905,70608555:0.003205):0.004807,150371741:0.010751):8.979e-05,150371739:0.006647):0.022090):0.012809):0.011838,219923427:0.057366):0.009364):0.004238,((219923450:0.022699,125628925:0.012519):0.048088,219923466:0.046514):0.003608):0.007025,((56549930:0.067920,219923440:0.059754):0.002384,((219923438:0.044329,219923439:0.038470):0.014514,(219923442:0.038021,(((207366060:0,207366061:0):0.001859,125628920:0.001806):0.024716,((((125628921:0.005610,207366057:0.003531):0.001354,(207366055:0.003311,207366056:0.002174):0.003225):0.011836,207366062:0.019303):0.003741,((((((207366047:0,207366048:0):0,207366049:0):0.001563,207366050:0.000272):0.002214,(207366051:0.000818,125628919:0.001017):0.000675):0.003916,207366054:0.007924):0.004138,((219923441:0.000975,207366052:-0.000975):0.000494,207366053:-0.000494):0.012373):0.010040):0.003349):0.017594):0.011029):-0.003134):0.011235):0.004149,((((219923435:0.064354,219923424:0.067340):0.002972,219923454:0.045087):0.002092,((219923460:0.027282,219923465:0.025756):0.031269,(219923462:0.017555,219923425:-0.009591):0.047358):0.006198):0.004242,(((219923463:0.031885,(219923459:0.000452,219923458:-0.000452):0.029292):0.005200,225685776:0.024691):0.020131,219923461:0.042563):0.004673):0.009128):0.001452,((56549934:0.088142,56549929:0.066475):0.004212,(219923437:0.048313,219923436:0.044997):0.014553):0.008927):0);	
+	</textarea>
+	<br/>
+	<select id="style">
+		<option value="cladogram">Cladogram</option>
+		<option value="rectanglecladogram">Rectangular cladogram</option>
+		<option value="phylogram">Phylogram</option>
+		<option value="circle">Circle tree</option>
+		<option value="circlephylogram">Circle phylogram</option>
+	</select>
+	<button onclick="showtree('newick')">Show</button>
+	</div>
+
+	<p><span id="message"></span></p>
+	<div style="width:500px;height:500px;background-color:white;border:1px solid rgb(228,228,228);">
+	<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" height="500" width="500">
+		<g id="viewport">
+		</g>
+	</svg>
+	</div>
+	
+<script>
+
+// http://stackoverflow.com/questions/498970/how-do-i-trim-a-string-in-javascript
+if (!String.prototype.trim)
+{
+	String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g, '');};
+}
+
+function showtree(element_id)
+{
+    var t = new Tree();
+    var element = document.getElementById(element_id);
+    var newick = element.value;
+    newick = newick.trim(newick);
+	t.Parse(newick);
+
+	if (t.error != 0)
+	{
+		document.getElementById('message').innerHTML='Error parsing tree';
+	}
+	else
+	{
+		document.getElementById('message').innerHTML='Parsed OK';
+				
+		t.ComputeWeights(t.root);
+		
+		var td = null;
+		
+		var selectmenu = document.getElementById('style');
+		var drawing_type = (selectmenu.options[selectmenu.selectedIndex].value);
+		
+		switch (drawing_type)
+		{
+			case 'rectanglecladogram':
+				td = new RectangleTreeDrawer();
+				break;
+		
+			case 'phylogram':
+				if (t.has_edge_lengths)
+				{
+					td = new PhylogramTreeDrawer();
+				}
+				else
+				{
+					td = new RectangleTreeDrawer();
+				}
+				break;
+				
+			case 'circle':
+				td = new CircleTreeDrawer();
+				break;
+				
+			case 'circlephylogram':
+				if (t.has_edge_lengths)
+				{
+					td = new CirclePhylogramDrawer();
+				}
+				else
+				{
+					td = new CircleTreeDrawer();
+				}
+				break;
+				
+			case 'cladogram':
+			default:
+				td = new TreeDrawer();
+				break;
+		}
+		
+		// clear existing diagram, if any
+		var svg = document.getElementById('svg');
+		while (svg.hasChildNodes()) 
+		{
+			svg.removeChild(svg.lastChild);
+		}
+		
+		
+		var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
+		cssStyle.setAttribute('type','text/css');
+		
+		var style=document.createTextNode("text{font-size:6px;}");
+		cssStyle.appendChild(style);
+		
+		svg.appendChild(cssStyle);
+		
+		
+		var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+		g.setAttribute('id','viewport');
+		svg.appendChild(g);
+		
+		
+		td.Init(t, {svg_id: 'viewport', width:500, height:500, fontHeight:10, root_length:0.1} );
+		
+		td.CalcCoordinates();
+		td.Draw();
+		
+		// label leaves...
+		
+		var n = new NodeIterator(t.root);
+		var q = n.Begin();
+		while (q != null)
+		{
+			if (q.IsLeaf())
+			{
+				switch (drawing_type)
+				{
+					case 'circle':
+					case 'circlephylogram':
+						var align = 'left';
+						var angle = q.angle * 180.0/Math.PI;
+						if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
+						{
+							align = 'right';
+							angle += 180.0;
+						}
+						drawRotatedText('viewport', q.xy, q.label, angle, align)
+						break;
+				
+					case 'cladogram':
+					case 'rectanglecladogram':
+					case 'phylogram':
+					default:				
+						drawText('viewport', q.xy, q.label);
+						break;
+				}
+			}
+			q = n.Next();
+		}
+		
+				
+		// Scale to fit window
+		var bbox = svg.getBBox();
+		
+		var scale = Math.min(td.settings.width/bbox.width, td.settings.height/bbox.height);
+		
+		
+		// move drawing to centre of viewport
+		var viewport = document.getElementById('viewport');
+		viewport.setAttribute('transform', 'scale(' + scale + ')');
+		
+		// centre
+		bbox = svg.getBBox();
+		if (bbox.x < 0)
+		{
+			viewport.setAttribute('transform', 'translate(' + -bbox.x + ' ' + -bbox.y + ')');
+		}
+		
+		
+		
+		// pan
+		$('svg').svgPan('viewport');
+	}
+	
+
+}
+
+</script>
+
+</body>
+</html>

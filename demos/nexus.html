@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>NEXUS Tree Viewer</title>
+	<style type="text/css" title="text/css">
+		/* @import url("http://bl.ocks.org/style.css?20120730"); */
+		body { font-family: sans-serif; }
+	</style>
+	<script src="jquery.js"></script>
+    <script type="text/javascript" src="jquery-svgpan.min.js"></script>
+
+	<script src="../nexus.js"></script>	
+	<script src="../treelib.js"></script>	
+</head>
+<body>
+	<h1>NEXUS tree viewer</h1>
+	<p><b>Paste in a <a href="http://en.wikipedia.org/wiki/Nexus_file">NEXUS</a> tree file</b></p>
+	<div>
+	<textarea id="nexus" rows="10" cols=100">
+	#NEXUS
+BEGIN TREES;
+	TRANSLATE
+		Tl468527 'Tachydromus sexlineatus KU311512',
+		Tl468442 'Lipinia pulchella pulchella RMB1079',
+		Tl468478 'Lamprolepis smaragdina KU326565',
+		Tl468503 'Emoia atrocostata KU304896',
+		Tl468476 'Eumeces quadrilineatus KU311490',
+		Tl468541 'Plestiodon fasciatus KU289462',
+		Tl468499 'Plestiodon anthracinus CAS325',
+		Tl468500 'Dasia grisea KU305573',
+		Tl468525 'Sphenomorphus abdictus abdictus KU306539',
+		Tl468535 'Eutropis multifasciata KU302904',
+		Tl468537 'Scincella reevesii FMNH255540',
+		Tl468498 'Scincella lateralis KU289461',
+		Tl468436 'Larutia seribuatensis LSUHC5168',
+		Tl468517 'Lygosoma bowringii LSUHC6998',
+		Tl468461 'Lygosoma LSUHC9321',
+		Tl468502 'Lygosoma quadrupes LSUHC8403',
+		Tl468437 'Brachymeles apus SP06915',
+		Tl468540 'Brachymeles apus RMBR2040',
+		Tl468448 'Davewakeum miriamae KU327692',
+		Tl468441 'Davewakeum miriamae KU327693',
+		Tl468460 'Brachymeles tridactylus KU320423',
+		Tl468447 'Brachymeles tridactylus KU320424',
+		Tl468471 'Brachymeles tridactylus KU320425',
+		Tl468466 'Brachymeles bonitae KU323086',
+		Tl468530 'Brachymeles bonitae KU307748',
+		Tl468440 'Brachymeles bonitae KU307749',
+		Tl468477 'Brachymeles bonitae KU326089',
+		Tl468435 'Brachymeles bonitae RMB3681',
+		Tl468526 'Brachymeles bonitae KU320471',
+		Tl468511 'Brachymeles bonitae KU320473',
+		Tl468473 'Brachymeles bonitae KU308004',
+		Tl468481 'Brachymeles bonitae KU307967',
+		Tl468459 'Brachymeles bonitae KU323937',
+		Tl468512 'Brachymeles bonitae KU323938',
+		Tl468510 'Brachymeles samarensis KU324020',
+		Tl468529 'Brachymeles samarensis KU324022',
+		Tl468490 'Brachymeles boulengeri mindorensis KU304351',
+		Tl468446 'Brachymeles boulengeri mindorensis KU307740',
+		Tl468454 'Brachymeles boulengeri mindorensis KU308447',
+		Tl468520 'Brachymeles boulengeri boulengeri KU323409',
+		Tl468445 'Brachymeles boulengeri boulengeri KU307752',
+		Tl468495 'Brachymeles boulengeri boulengeri KU307753',
+		Tl468456 'Brachymeles boulengeri taylori KU320476',
+		Tl468514 'Brachymeles boulengeri taylori KU320478',
+		Tl468492 'Brachymeles boulengeri taylori KU307737',
+		Tl468491 'Brachymeles boulengeri taylori KU320481',
+		Tl468457 'Brachymeles talinis RMB3283',
+		Tl468465 'Brachymeles talinis RMB3305',
+		Tl468523 'Brachymeles talinis KU303990',
+		Tl468474 'Brachymeles talinis KU306756',
+		Tl468513 'Brachymeles talinis KU315355',
+		Tl468470 'Brachymeles speciesA KU323934',
+		Tl468475 'Brachymeles speciesA KU323933',
+		Tl468488 'Brachymeles speciesA KU323936',
+		Tl468515 'Brachymeles speciesB KU324041',
+		Tl468531 'Brachymeles speciesB KU324031',
+		Tl468518 'Brachymeles speciesB KU304897',
+		Tl468467 'Brachymeles speciesB KU304558',
+		Tl468522 'Brachymeles elerae KU326566',
+		Tl468501 'Brachymeles elerae KU326567',
+		Tl468487 'Brachymeles muntingkamay KU308866',
+		Tl468534 'Brachymeles muntingkamay KU308923',
+		Tl468451 'Brachymeles muntingkamay KU308813',
+		Tl468455 'Brachymeles bicolor KU323149',
+		Tl468486 'Brachymeles bicolor KU323150',
+		Tl468496 'Brachymeles bicolor KU323151',
+		Tl468452 'Brachymeles boulengeri boholensis KU323995',
+		Tl468449 'Brachymeles boulengeri boholensis KU323939',
+		Tl468524 'Brachymeles boulengeri boholensis KU323958',
+		Tl468458 'Brachymeles gracilis hilong KU311216',
+		Tl468533 'Brachymeles gracilis hilong KU311220',
+		Tl468439 'Brachymeles gracilis hilong KU310825',
+		Tl468493 'Brachymeles gracilis hilong KU310731',
+		Tl468484 'Brachymeles pathfinderi KU324057',
+		Tl468505 'Brachymeles pathfinderi KU324058',
+		Tl468462 'Brachymeles pathfinderi KU324096',
+		Tl468509 'Brachymeles gracilis gracilis PNMCMNHH1175',
+		Tl468538 'Brachymeles gracilis gracilis PNMCMNHH1176',
+		Tl468536 'Brachymeles gracilis gracilis KU326098',
+		Tl468483 'Brachymeles gracilis gracilis KU326099',
+		Tl468494 'Brachymeles makusog KU313610',
+		Tl468453 'Brachymeles makusog KU313611',
+		Tl468464 'Brachymeles makusog KU308127',
+		Tl468472 'Brachymeles makusog KU308128',
+		Tl468497 'Brachymeles schadenbergi orientalis KU314092',
+		Tl468434 'Brachymeles schadenbergi orientalis KU310942',
+		Tl468508 'Brachymeles schadenbergi orientalis KU311232',
+		Tl468521 'Brachymeles schadenbergi orientalis KU324029',
+		Tl468504 'Brachymeles schadenbergi orientalis KU324027',
+		Tl468463 'Brachymeles schadenbergi schadenbergi PNMCMNHH1457',
+		Tl468489 'Brachymeles schadenbergi schadenbergi KU314973',
+		Tl468519 'Brachymeles schadenbergi schadenbergi KU314998',
+		Tl468506 'Brachymeles minimus KU308131',
+		Tl468438 'Brachymeles minimus KU308129',
+		Tl468479 'Brachymeles minimus KU308130',
+		Tl468480 'Brachymeles lukbani KU313602',
+		Tl468450 'Brachymeles lukbani KU313596',
+		Tl468516 'Brachymeles lukbani KU313597',
+		Tl468528 'Brachymeles cebuensis KU320419',
+		Tl468482 'Brachymeles cebuensis KU320421',
+		Tl468444 'Brachymeles cebuensis KU320420',
+		Tl468485 'Brachymeles samarensis KU310849',
+		Tl468532 'Brachymeles samarensis KU311225',
+		Tl468469 'Brachymeles bonitae KU323085',
+		Tl468539 'Brachymeles samarensis KU310850',
+		Tl468507 'Brachymeles samarensis KU310851',
+		Tl468443 'Brachymeles samarensis KU311226',
+		Tl468468 'Brachymeles samarensis KU311227'		;
+	TREE 'ML' = (((Tl468527:1.7265165431555316,(Tl468436:0.43040457771536544,(Tl468525:0.5204692595667767,(Tl468442:0.35980279451520675,(Tl468537:0.32286396369556497,Tl468498:0.4162556540325174):0.10868620074978022):0.1020895239203771):0.08017608471396781):0.19828563322327575):0.17497652052970264,((Tl468500:0.42964218660412584,Tl468535:0.392464975330328):0.15599091463818118,(Tl468503:0.7576264878007881,(Tl468517:0.40405914385208236,(Tl468478:0.5059128745009291,(Tl468461:0.28032460945121795,Tl468502:0.34364232983113496):0.12303033455258838):0.04949224815501804):0.1511888410819616):0.09939430015757383):0.2091680379037046):0.025575730063726338,((Tl468476:0.19359274108597285,(Tl468541:0.026638594365430725,Tl468499:0.011509090060558093):0.2959152126559086):0.5126582379914767,((Tl468437:0.1292390365485745,Tl468540:0.14278228327679093):0.4794987128454285,((Tl468448:1.623643106435378E-5,Tl468441:4.200977897049533E-4):0.6406452700961701,((((Tl468466:1.623643106435378E-5,Tl468469:0.0012072881425062476):0.06558981468005513,(((Tl468459:0.014723874591024894,Tl468512:0.020220742672251223):0.05661018322903451,(Tl468460:4.602520707684184E-4,(Tl468447:4.586885081319573E-4,Tl468471:1.623643106435378E-5):1.623643106435378E-5):0.07809202089175928):0.03738697680523968,(((Tl468530:0.004782253535922244,Tl468440:0.0017495450308890506):0.0802168408513645,(Tl468477:8.024366098536401E-4,Tl468435:5.563028882237726E-4):0.06861716892128107):0.007870682886767672,((Tl468526:0.012193896618266427,Tl468511:0.008690912946749257):0.051635389802050714,(Tl468473:1.623643106435378E-5,Tl468481:1.623643106435378E-5):0.04981252616377462):0.04304806326562503):0.012413289689386877):0.02391373862225034):0.13147248030335365,(((Tl468444:7.072419107431559E-4,(Tl468528:1.623643106435378E-5,Tl468482:1.623643106435378E-5):1.6966132728235328E-4):0.11334533773948335,(Tl468532:0.003408765164888248,(Tl468443:1.623643106435378E-5,Tl468468:1.623643106435378E-5):0.005143580759758263):0.10933454275767633):0.0645884985941303,((Tl468507:5.740547191503067E-4,(Tl468485:1.623643106435378E-5,Tl468539:1.623643106435378E-5):1.623643106435378E-5):0.18663242331988714,((Tl468510:0.006300935922885041,Tl468529:1.623643106435378E-5):0.11212375496201246,((Tl468479:4.463612748903396E-4,(Tl468506:1.623643106435378E-5,Tl468438:1.623643106435378E-5):4.4537170181586623E-4):0.04113093569542996,(Tl468516:1.623643106435378E-5,(Tl468480:8.845204748670198E-4,Tl468450:0.0017750879510741622):8.849374250918267E-4):0.030734915301023746):0.09535962047933821):0.026071514582855764):0.02489524789091455):0.05307583880041588):0.03374121414524355,(((Tl468496:1.623643106435378E-5,(Tl468455:0.004832396938322713,Tl468486:4.3631116780785907E-4):4.3643964157132975E-4):0.1469263740087168,(((Tl468520:0.04873193666720445,(Tl468445:0.003647808355471592,Tl468495:0.004276271823897252):0.03715683015632234):0.06776626797762786,((Tl468490:0.009909979504536584,(Tl468446:0.016083259254339115,Tl468454:0.023102389946581484):0.006656776047853135):0.11626446783280338,((Tl468456:4.5546858378675065E-4,Tl468514:4.428751768948281E-4):0.031115746267193465,(Tl468492:7.804969671699557E-4,Tl468491:5.989416824900859E-4):0.03487376087767215):0.0879396758595494):0.02276080258958723):0.02139374110304807,(((Tl468457:1.623643106435378E-5,Tl468465:0.0018838493912876416):0.03427140486352071,(Tl468523:0.026138342897739485,(Tl468474:0.03897791000082742,Tl468513:0.02408275564268986):0.0036660510859782298):0.006984578404525918):0.050502604011069964,((Tl468475:0.0010162587632610671,(Tl468470:0.01742468846446747,Tl468488:0.0040241026911548815):0.0018755251790106946):0.03621743470505683,((Tl468515:0.0013442997655651204,Tl468531:9.671531647875535E-4):0.01704217033745968,(Tl468518:3.868569521058077E-4,Tl468467:0.0010201181787521515):0.011273784543495414):0.02857667540564085):0.024434243236481825):0.06839652155148873):0.06890672299410965):0.008777872056632954,((((Tl468458:0.003270585681305106,Tl468533:0.0013633436914344324):0.005068994421269346,(Tl468439:0.0013617405940888798,Tl468493:0.0022619943865545113):0.007306646946489516):0.09155235984155294,((Tl468462:0.006091192012661745,(Tl468484:3.9784556067380943E-4,Tl468505:5.441081360709193E-4):0.005991374492523131):0.04132073838934543,((Tl468509:0.0030200133369998315,Tl468538:0.0079762378893733):0.015786763385277108,(Tl468536:0.0039924029852994826,Tl468483:0.005277131076375662):0.0248284874125485):0.03512825712955392):0.038671288591928185):0.08482990818368596,(((Tl468522:8.385272730043258E-4,Tl468501:1.623643106435378E-5):0.0498394781004228,(Tl468534:4.031614832357386E-4,(Tl468487:8.111156704392438E-4,Tl468451:0.0020730711677652753):4.3695570511045206E-4):0.03731837196783836):0.13382058887585363,((Tl468452:0.005273202168469261,(Tl468449:0.008570488008163362,Tl468524:0.00837928681349789):0.0034013842891270547):0.1529933120007875,(((Tl468494:0.00472673551816223,Tl468453:0.004632466737036447):0.020036061032343056,(Tl468464:0.006266477490426974,Tl468472:0.006424295054242513):0.013614584180583495):0.07771549096740057,((Tl468463:0.0178273005877843,(Tl468489:0.002592044511400165,Tl468519:3.4585094039444984E-4):0.02136920762953107):0.04705540926681528,(Tl468434:0.006629365691424003,(Tl468497:0.006323517901166671,(Tl468508:0.00432488601029558,(Tl468521:8.988161216415906E-4,Tl468504:0.0022974448695437994):0.004044223358633199):9.280484881446056E-4):0.0027011598131328634):0.0590520980507217):0.03911155085080128):0.0296735982883898):0.030865342305168998):0.012850292981366368):0.01163435887612694):0.04940677325760265):0.2161074257149811):0.13207061569276443):0.2668609232559115):0.025575730063726338);
+END;
+	
+	</textarea>
+	<br/>
+	<select id="style">
+		<option value="cladogram">Cladogram</option>
+		<option value="rectanglecladogram">Rectangular cladogram</option>
+		<option value="phylogram">Phylogram</option>
+		<option value="circle">Circle tree</option>
+		<option value="circlephylogram">Circle phylogram</option>
+	</select>
+	<button onclick="showtree('nexus')">Show</button>
+	</div>
+
+	<p><span id="message"></span></p>
+	<div style="width:500px;height:500px;background-color:white;border:1px solid rgb(228,228,228);">
+	<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" height="500" width="500">
+		<g id="viewport">
+		</g>
+	</svg>
+	</div>
+	
+<script>
+
+// http://stackoverflow.com/questions/498970/how-do-i-trim-a-string-in-javascript
+if (!String.prototype.trim)
+{
+	String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g, '');};
+}
+
+function showtree(element_id)
+{
+    var t = new Tree();
+    var element = document.getElementById(element_id);
+    var text = element.value;
+	text = text.trim();
+	
+	var nexus = parse_nexus(text);
+	
+	if (nexus.status != NexusError.ok)
+	{
+		document.getElementById('message').innerHTML='Error parsing NEXUS';
+	}
+	else
+	{
+		if (nexus.treesblock.trees.length == 0)
+		{
+			document.getElementById('message').innerHTML='No trees';
+		}
+		else
+		{
+			newick = nexus.treesblock.trees[0].newick;
+        
+			t.Parse(newick);
+		
+			if (t.error != 0)
+			{
+				document.getElementById('message').innerHTML='Error parsing tree';
+			}
+			else
+			{
+				document.getElementById('message').innerHTML='Parsed OK (use mouse to zoom and pan)';
+				
+				//t.WriteNewick();
+				
+				t.ComputeWeights(t.root);
+				
+				var td = null;
+				
+				var selectmenu = document.getElementById('style');
+				var drawing_type = (selectmenu.options[selectmenu.selectedIndex].value);
+				
+				switch (drawing_type)
+				{
+					case 'rectanglecladogram':
+						td = new RectangleTreeDrawer();
+						break;
+				
+					case 'phylogram':
+						if (t.has_edge_lengths)
+						{
+							td = new PhylogramTreeDrawer();
+						}
+						else
+						{
+							td = new RectangleTreeDrawer();
+						}
+						break;
+						
+					case 'circle':
+						td = new CircleTreeDrawer();
+						break;
+						
+					case 'circlephylogram':
+						if (t.has_edge_lengths)
+						{
+							td = new CirclePhylogramDrawer();
+						}
+						else
+						{
+							td = new CircleTreeDrawer();
+						}
+						break;
+						
+					case 'cladogram':
+					default:
+						td = new TreeDrawer();
+						break;
+				}
+				
+				// clear existing diagram, if any
+				var svg = document.getElementById('svg');
+				while (svg.hasChildNodes()) 
+				{
+					svg.removeChild(svg.lastChild);
+				}
+				
+				
+				
+				
+				var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+				g.setAttribute('id','viewport');
+				svg.appendChild(g);
+				
+				
+				td.Init(t, {svg_id: 'viewport', width:500, height:500, fontHeight:10, root_length:0.1} );
+				
+				td.CalcCoordinates();
+				td.Draw();
+				
+				// font size
+				var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
+				cssStyle.setAttribute('type','text/css');
+				
+				var font_size = Math.floor(td.settings.height/t.num_leaves);
+				
+				var style=document.createTextNode("text{font-size:" + font_size + "px;}");
+				cssStyle.appendChild(style);
+				
+				svg.appendChild(cssStyle);
+				
+				
+				// label leaves...
+				
+				var n = new NodeIterator(t.root);
+				var q = n.Begin();
+				while (q != null)
+				{
+					if (q.IsLeaf())
+					{
+						var label = q.label;
+						
+						if (nexus.treesblock.translate)
+						{
+							if (nexus.treesblock.translate[label])
+							{
+								label = nexus.treesblock.translate[label];
+							}
+						}
+					
+						switch (drawing_type)
+						{
+							case 'circle':
+							case 'circlephylogram':
+								var align = 'left';
+								var angle = q.angle * 180.0/Math.PI;
+								if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
+								{
+									align = 'right';
+									angle += 180.0;
+								}
+								drawRotatedText('viewport', q.xy, label, angle, align)
+								break;
+						
+							case 'cladogram':
+							case 'rectanglecladogram':
+							case 'phylogram':
+							default:				
+								drawText('viewport', q.xy, label);
+								break;
+						}
+					}
+					q = n.Next();
+				}
+				
+				// Scale to fit window
+				var bbox = svg.getBBox();
+				
+				var scale = Math.min(td.settings.width/bbox.width, td.settings.height/bbox.height);
+				
+				
+				// move drawing to centre of viewport
+				var viewport = document.getElementById('viewport');
+				viewport.setAttribute('transform', 'scale(' + scale + ')');
+				
+				// centre
+				bbox = svg.getBBox();
+				if (bbox.x < 0)
+				{
+					viewport.setAttribute('transform', 'translate(' + -bbox.x + ' ' + -bbox.y + ')');
+				}
+				
+				
+				// pan
+				$('svg').svgPan('viewport');
+			}
+		}	
+	}
+}
+
+</script>
+
+</body>
+</html>
