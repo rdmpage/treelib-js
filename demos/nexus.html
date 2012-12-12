@@ -265,6 +265,7 @@ function showtree(element_id)
 				cssStyle.setAttribute('type','text/css');
 				
 				var font_size = Math.floor(td.settings.height/t.num_leaves);
+				font_size = Math.max(font_size, 1);
 				
 				var style=document.createTextNode("text{font-size:" + font_size + "px;}");
 				cssStyle.appendChild(style);

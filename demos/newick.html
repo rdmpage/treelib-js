@@ -116,15 +116,6 @@ function showtree(element_id)
 		}
 		
 		
-		var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
-		cssStyle.setAttribute('type','text/css');
-		
-		var style=document.createTextNode("text{font-size:6px;}");
-		cssStyle.appendChild(style);
-		
-		svg.appendChild(cssStyle);
-		
-		
 		var g = document.createElementNS('http://www.w3.org/2000/svg','g');
 		g.setAttribute('id','viewport');
 		svg.appendChild(g);
@@ -135,6 +126,18 @@ function showtree(element_id)
 		td.CalcCoordinates();
 		td.Draw();
 		
+		// font size
+		var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
+		cssStyle.setAttribute('type','text/css');
+		
+		var font_size = Math.floor(td.settings.height/t.num_leaves);
+		font_size = Math.max(font_size, 1);
+		
+		var style=document.createTextNode("text{font-size:" + font_size + "px;}");
+		cssStyle.appendChild(style);
+		
+		svg.appendChild(cssStyle);
+
 		// label leaves...
 		
 		var n = new NodeIterator(t.root);
