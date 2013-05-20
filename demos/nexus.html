@@ -18,7 +18,7 @@
 	<p><b>Paste in a <a href="http://en.wikipedia.org/wiki/Nexus_file">NEXUS</a> tree file</b></p>
 	<div>
 	<textarea id="nexus" rows="10" cols=100">
-	#NEXUS
+#NEXUS
 BEGIN TREES;
 	TRANSLATE
 		Tl468527 'Tachydromus sexlineatus KU311512',
@@ -133,26 +133,203 @@ BEGIN TREES;
 END;
 	
 	</textarea>
-	<br/>
-	<select id="style">
-		<option value="cladogram">Cladogram</option>
-		<option value="rectanglecladogram">Rectangular cladogram</option>
-		<option value="phylogram">Phylogram</option>
-		<option value="circle">Circle tree</option>
-		<option value="circlephylogram">Circle phylogram</option>
-	</select>
-	<button onclick="showtree('nexus')">Show</button>
+	
+	<p><span id="message"></span></p>	
+	
+	<div style="border:1px solid rgb(228,228,228);width:500px;height:540px;">
+	<div>
+		<a class="button-radial"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/radial.svg" height="24"/></a>
+		<a class="button-cladogram"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/cladogram.svg" height="24"/></a>
+		<a class="button-rectanglecladogram"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/rectangle.svg" height="24"/></a>
+		<a class="button-phylogram"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/phylogram.svg" height="24"/></a>
+		<a class="button-circle"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/circle.svg" height="24"/></a>
+		<a class="button-circlephylogram"><img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/circlephylogram.svg" height="24"/></a>
+		<div style="float:right">
+		<a style="display:none;" id="download" href-lang="image/svg+xml" href="" download="tree.svg">
+			<img style="padding:2px;border:1px solid rgb(228,228,228);" src="images/download.svg" height="24"/>		
+		</a>
+		</div>
 	</div>
 
-	<p><span id="message"></span></p>
-	<div style="width:500px;height:500px;background-color:white;border:1px solid rgb(228,228,228);background:url(g1001cc2.gif);"">
+
+<!--	<div style="width:500px;height:500px;background-color:white;border:1px solid rgb(228,228,228);background:url(g1001cc2.gif);""> -->
+	<div style="width:500px;height:500px;background-color:white;">
 	<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" height="500" width="500">
 		<g id="viewport">
 		</g>
 	</svg>
+	
+	
 	</div>
 	
 <script>
+
+// button handlers
+$('.button-radial').click(function(){
+showtree('nexus', 'radial');
+});
+$('.button-cladogram').click(function(){
+showtree('nexus', 'cladogram');
+});
+$('.button-rectanglecladogram').click(function(){
+showtree('nexus', 'rectanglecladogram');
+});
+$('.button-phylogram').click(function(){
+showtree('nexus', 'phylogram');
+});
+$('.button-phylogram').click(function(){
+showtree('nexus', 'phylogram');
+});
+$('.button-circle').click(function(){
+showtree('nexus', 'circle');
+});
+$('.button-circlephylogram').click(function(){
+showtree('nexus', 'circlephylogram');
+});
+
+//--------------------------------------------------------------------------------------------------
+/**
+*
+*  Base64 encode / decode
+*  http://www.webtoolkit.info/
+*
+**/
+ 
+var Base64 = {
+ 
+	// private property
+	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+ 
+	// public method for encoding
+	encode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = Base64._utf8_encode(input);
+ 
+		while (i < input.length) {
+ 
+			chr1 = input.charCodeAt(i++);
+			chr2 = input.charCodeAt(i++);
+			chr3 = input.charCodeAt(i++);
+ 
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+ 
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+ 
+			output = output +
+			this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+			this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+ 
+		}
+ 
+		return output;
+	},
+ 
+	// public method for decoding
+	decode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+ 
+		while (i < input.length) {
+ 
+			enc1 = this._keyStr.indexOf(input.charAt(i++));
+			enc2 = this._keyStr.indexOf(input.charAt(i++));
+			enc3 = this._keyStr.indexOf(input.charAt(i++));
+			enc4 = this._keyStr.indexOf(input.charAt(i++));
+ 
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+ 
+			output = output + String.fromCharCode(chr1);
+ 
+			if (enc3 != 64) {
+				output = output + String.fromCharCode(chr2);
+			}
+			if (enc4 != 64) {
+				output = output + String.fromCharCode(chr3);
+			}
+ 
+		}
+ 
+		output = Base64._utf8_decode(output);
+ 
+		return output;
+ 
+	},
+ 
+	// private method for UTF-8 encoding
+	_utf8_encode : function (string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+ 
+		for (var n = 0; n < string.length; n++) {
+ 
+			var c = string.charCodeAt(n);
+ 
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+ 
+		}
+ 
+		return utftext;
+	},
+ 
+	// private method for UTF-8 decoding
+	_utf8_decode : function (utftext) {
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+ 
+		while ( i < utftext.length ) {
+ 
+			c = utftext.charCodeAt(i);
+ 
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+ 
+		}
+ 
+		return string;
+	}
+ 
+} 
 
 // http://stackoverflow.com/questions/498970/how-do-i-trim-a-string-in-javascript
 if (!String.prototype.trim)
@@ -160,7 +337,7 @@ if (!String.prototype.trim)
 	String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g, '');};
 }
 
-function showtree(element_id)
+function showtree(element_id, drawing_type)
 {
     var t = new Tree();
     var element = document.getElementById(element_id);
@@ -199,11 +376,15 @@ function showtree(element_id)
 				
 				var td = null;
 				
-				var selectmenu = document.getElementById('style');
-				var drawing_type = (selectmenu.options[selectmenu.selectedIndex].value);
+				//var selectmenu = document.getElementById('style');
+				//var drawing_type = (selectmenu.options[selectmenu.selectedIndex].value);
 				
 				switch (drawing_type)
 				{
+					case 'radial':
+						td = new RadialTreeDrawer();
+						break;
+				
 					case 'rectanglecladogram':
 						td = new RectangleTreeDrawer();
 						break;
@@ -246,10 +427,7 @@ function showtree(element_id)
 				{
 					svg.removeChild(svg.lastChild);
 				}
-				
-				
-				
-				
+
 				var g = document.createElementNS('http://www.w3.org/2000/svg','g');
 				g.setAttribute('id','viewport');
 				svg.appendChild(g);
@@ -264,78 +442,47 @@ function showtree(element_id)
 				var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
 				cssStyle.setAttribute('type','text/css');
 				
+				// rectangular tree
 				var font_size = Math.floor(td.settings.height/t.num_leaves);
 				font_size = Math.max(font_size, 1);
+				
+				// circle tree				
+				if (td.leaf_angle) {
+					
+					//font_size = (2 * td.leaf_radius * Math.PI)/ t.num_leaves;
+					if (td.leaf_radius) {
+						font_size = Math.sin(td.leaf_angle) * td.leaf_radius;
+					} else {
+						// circular phylogram, radial
+						font_size = Math.sin(td.leaf_angle) * td.settings.width/4;
+					}
+					
+					font_size = Math.round(font_size);
+					font_size = Math.max(font_size, 1);					
+				}
+				
+				// Tell tree drawer what font size we are using
+				td.settings.fontHeight = font_size;
 				
 				var style=document.createTextNode("text{font-size:" + font_size + "px;}");
 				cssStyle.appendChild(style);
 				
-				svg.appendChild(cssStyle);
+				svg.appendChild(cssStyle);				
 				
-				
-				// label leaves...
-				
-				var n = new NodeIterator(t.root);
-				var q = n.Begin();
-				while (q != null)
-				{
-					if (q.IsLeaf())
-					{
-						var label = q.label;
-						
-						if (nexus.treesblock.translate)
-						{
-							if (nexus.treesblock.translate[label])
-							{
-								label = nexus.treesblock.translate[label];
-							}
-						}
-					
-						switch (drawing_type)
-						{
-							case 'circle':
-							case 'circlephylogram':
-								var align = 'left';
-								var angle = q.angle * 180.0/Math.PI;
-								if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
-								{
-									align = 'right';
-									angle += 180.0;
-								}
-								drawRotatedText('viewport', q.xy, label, angle, align)
-								break;
-						
-							case 'cladogram':
-							case 'rectanglecladogram':
-							case 'phylogram':
-							default:				
-								drawText('viewport', q.xy, label);
-								break;
-						}
-					}
-					q = n.Next();
-				}
-				
-				// Scale to fit window
-				var bbox = svg.getBBox();
-				
-				var scale = Math.min(td.settings.width/bbox.width, td.settings.height/bbox.height);
-				
-				
-				// move drawing to centre of viewport
-				var viewport = document.getElementById('viewport');
-				viewport.setAttribute('transform', 'scale(' + scale + ')');
-				
-				// centre
-				bbox = svg.getBBox();
-				if (bbox.x < 0)
-				{
-					viewport.setAttribute('transform', 'translate(' + -bbox.x + ' ' + -bbox.y + ')');
-				}
-				
-				
+				td.DrawLabels(nexus);
+							
 				// pan
 				$('svg').svgPan('viewport');
+				
+				// Make SVG downloadable
+				// http://stackoverflow.com/questions/8379923/save-svg-image-rendered-by-a-javascript-to-local-disk-as-png-file/8861315#8861315
+				// http://stackoverflow.com/a/4228053/9684
+				// http://stackoverflow.com/questions/2483919/how-to-save-svg-canvas-to-local-filesystem#comment23679242_4228053
+				var svgString = new XMLSerializer().serializeToString(svg);
+				var b64 = Base64.encode(svgString);
+				$("#download").attr('href', "data:image/svg+xml;base64,\n" + b64);
+				$("#download").show();
+				
 			}
 		}	
 	}

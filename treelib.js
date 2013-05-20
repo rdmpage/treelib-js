@@ -148,6 +148,14 @@ function drawPath(svg_id, pathString)
 }
 
 //--------------------------------------------------------------------------------------------------
+// Remove NEXUS-style string formatting, e.g. underscores
+function formatString(s)
+{
+	s = s.replace(/_/g, ' ');
+	return s;
+}
+
+//--------------------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/894860/set-a-default-parameter-value-for-a-javascript-function
 function Node(label)
 {
@@ -808,6 +816,39 @@ TreeDrawer.prototype.Draw = function()
 }
 
 //--------------------------------------------------------------------------------------------------
+TreeDrawer.prototype.DrawLabels = function(nexus)
+{
+	var nxs = typeof nexus !== 'undefined' ? nexus : null;
+	
+	var n = new NodeIterator(this.t.root);
+	var q = n.Begin();
+	while (q != null)
+	{	
+		if (q.IsLeaf())
+		{
+			var label = q.label;
+			
+			if (nxs) 
+			{
+				if (nxs.treesblock.translate)
+				{
+					if (nxs.treesblock.translate[label])
+					{
+						label = nxs.treesblock.translate[label];
+					}
+				}
+			}
+			// offset 
+			label_xy = q.xy;
+			label_xy['x'] += this.settings.fontHeight/2.0;
+			
+			drawText('viewport', label_xy, formatString(label));
+		}
+		q = n.Next();
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype = new TreeDrawer();
 
 function RectangleTreeDrawer()
@@ -1265,9 +1306,6 @@ CircleTreeDrawer.prototype.CalcCoordinates = function()
 		}
 		q = n.Next();
 	}
-	
-
-	
 }	
 
 //--------------------------------------------------------------------------------------------------
@@ -1279,6 +1317,50 @@ CircleTreeDrawer.prototype.Draw = function()
 	// move drawing to centre of viewport
 	var viewport = document.getElementById(this.settings.svg_id);
 	viewport.setAttribute('transform', 'translate(' + (this.settings.width + this.root_length)/2 + ' ' +  this.settings.height/2 + ')');
+}
+
+//--------------------------------------------------------------------------------------------------
+CircleTreeDrawer.prototype.DrawLabels = function(nexus)
+{
+	var nxs = typeof nexus !== 'undefined' ? nexus : null;
+	
+	var n = new NodeIterator(this.t.root);
+	var q = n.Begin();
+	while (q != null)
+	{	
+		if (q.IsLeaf())
+		{
+			var label = q.label;
+			
+			if (nxs) 
+			{
+				if (nxs.treesblock.translate)
+				{
+					if (nxs.treesblock.translate[label])
+					{
+						label = nxs.treesblock.translate[label];
+					}
+				}
+			}
+			
+			var align = 'left';
+			var angle = q.angle * 180.0/Math.PI;
+			if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
+			{
+				align = 'right';
+				angle += 180.0;
+			}
+			
+			// offset label 
+			var r = q.radius + this.settings.fontHeight/2.0;
+			var label_xy = [];
+			label_xy['x'] = Math.cos(q.angle) * r;
+			label_xy['y'] = Math.sin(q.angle) * r;
+			
+			drawRotatedText('viewport', label_xy, formatString(label), angle, align);
+		}
+		q = n.Next();
+	}
 }
 
 
@@ -1356,11 +1438,189 @@ CirclePhylogramDrawer.prototype.CalcCoordinates = function()
 		}
 		q = n.Next();
 	}
-	
-
-	
 }	
 
+//--------------------------------------------------------------------------------------------------
+CirclePhylogramDrawer.prototype.Draw = function() 
+{
+	// parent method
+	TreeDrawer.prototype.Draw.call(this);
+	
+	// move drawing to centre of viewport
+	var viewport = document.getElementById(this.settings.svg_id);
+	viewport.setAttribute('transform', 'translate(' + (this.settings.width + this.root_length)/2 + ' ' +  this.settings.height/2 + ')');
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype = new RectangleTreeDrawer();
+
+function RadialTreeDrawer()
+{
+	TreeDrawer.apply(this, arguments);
+	
+	this.min_xy = [];
+	this.min_xy['x'] = 0;
+	this.min_xy['y'] = 0;
+
+	this.max_xy = [];
+	this.max_xy['x'] = 0;
+	this.max_xy['y'] = 0;
+};
+
+
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.CalcInternal = function(p)
+{
+	// angle of this node
+	var angle = p.angle;	
+	
+	// arc occupied by subtrees rooted at this node
+	var p_arc = 2 * Math.PI * (p.weight / this.t.num_leaves);
+	
+	angle -= p_arc/2;
+	
+	var q = p.child;
+	while (q)
+	{
+		var arc = 2 * Math.PI * (q.weight / this.t.num_leaves);
+
+		q.angle = arc/2 + angle;
+				
+		var pt = [];
+		pt['x'] = p.xy['x'] + q.edge_length * Math.cos(q.angle) * 1000;
+		pt['y'] = p.xy['y'] + q.edge_length * Math.sin(q.angle) * 1000;
+		
+		q.xy['x'] = pt['x'];
+		q.xy['y'] = pt['y'];
+		
+		this.min_xy['x'] = Math.min(this.min_xy['x'], q.xy['x']);
+		this.min_xy['y'] = Math.min(this.min_xy['y'], q.xy['y']);
+
+		this.max_xy['x'] = Math.max(this.max_xy['x'], q.xy['x']);
+		this.max_xy['y'] = Math.max(this.max_xy['y'], q.xy['y']);
+		
+		angle += arc;
+		q = q.sibling;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.CalcLeaf = function(p)
+{
+}		
+	
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.DrawLeaf = function(p)
+{
+	var p0 = p.xy;
+	var p1 = p.ancestor.xy;
+	drawLine(this.settings.svg_id, p0, p1);
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.DrawInternal = function(p)
+{
+	var p0 = p.xy;
+	if (p.ancestor)
+	{
+		var p1 = p.ancestor.xy;
+		drawLine(this.settings.svg_id, p0, p1);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.DrawRoot = function()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.CalcCoordinates = function() 
+{
+	this.t.ComputeWeights(this.t.root);
+	
+	// Generate unit branch lengths if tree has no branch lengths
+	if (!this.t.has_edge_lengths)
+	{
+		var n = new PreorderIterator(this.t.root);
+		var q = n.Begin();
+		while (q != null)
+		{
+			q.edge_length = 1.0;
+			q = n.Next();
+		}		
+	}
+
+	this.leaf_angle = 2 * Math.PI / this.t.num_leaves;	
+	this.t.root.angle = 0;
+
+	var pt = [];
+	pt['x'] = 0;
+	pt['y'] = 0;
+	
+	this.t.root.xy['x'] = pt['x'];
+	this.t.root.xy['y'] = pt['y'];
+	
+	n = new PreorderIterator(this.t.root);
+	var q = n.Begin();
+	while (q != null)
+	{
+		if (q.IsLeaf())
+		{
+		}
+		else
+		{
+			this.CalcInternal(q);
+		}
+		q = n.Next();
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
+RadialTreeDrawer.prototype.DrawLabels = function(nexus)
+{
+	var nxs = typeof nexus !== 'undefined' ? nexus : null;
+	
+	var n = new NodeIterator(this.t.root);
+	var q = n.Begin();
+	while (q != null)
+	{	
+		if (q.IsLeaf())
+		{
+			var label = q.label;
+			
+			if (nxs) 
+			{
+				if (nxs.treesblock.translate)
+				{
+					if (nxs.treesblock.translate[label])
+					{
+						label = nxs.treesblock.translate[label];
+					}
+				}
+			}
+			
+			var align = 'left';
+			var angle = q.angle * 180.0/Math.PI;
+			if ((q.angle < -Math.PI/2) || (q.angle > Math.PI/2))
+			{
+				align = 'right';
+				angle += 180.0;
+			}
+			
+			var label_xy = [];
+			label_xy['x'] = q.xy['x'];
+			label_xy['y'] = q.xy['y'];
+
+			var offset = 10; //this.settings.fontHeight/2.0;
+			label_xy['x'] += Math.cos(q.angle) * offset;
+			label_xy['y'] += Math.sin(q.angle) * offset;
+						
+			drawRotatedText('viewport', label_xy, formatString(label), angle, align);
+		}
+		q = n.Next();
+	}
+}
 
 
 //--------------------------------------------------------------------------------------------------
@@ -1379,6 +1639,69 @@ function uniqueid(){
 
     return (idstr);
 }	
+
+//--------------------------------------------------------------------------------------------------
+function draw_tree_labels(nexus, t, drawing_type) {
+	// label leaves...
+	var n = new NodeIterator(t.root);
+	var q = n.Begin();
+	while (q != null)
+	{
+		if (q.IsLeaf())
+		{
+			var label = q.label;
+			
+			if (nexus.treesblock.translate)
+			{
+				if (nexus.treesblock.translate[label])
+				{
+					label = nexus.treesblock.translate[label];
+				}
+			}
+			
+			switch (drawing_type)
+			{
+				case 'radial':
+					var align = 'left';
+					var angle = q.angle * 180.0/Math.PI;
+					if ((q.angle < -Math.PI/2) || (q.angle > Math.PI/2))
+					{
+						align = 'right';
+						angle += 180.0;
+					}
+					drawRotatedText('viewport', q.xy, label, angle, align)
+					break;
+			
+				case 'circle':
+				case 'circlephylogram':
+					var align = 'left';
+					var angle = q.angle * 180.0/Math.PI;
+					if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
+					{
+						align = 'right';
+						angle += 180.0;
+					}
+
+					var r = td.root_length + td.settings.width/2;
+								var pt = [];
+								pt['x'] = Math.cos(q.angle) * r;
+								pt['y'] = Math.sin(q.angle) * r;
+					drawRotatedText('viewport', pt, label, angle, align);
+
+					//drawRotatedText('viewport', q.xy, label, angle, align);
+					break;
+			
+				case 'cladogram':
+				case 'rectanglecladogram':
+				case 'phylogram':
+				default:				
+					drawText('viewport', q.xy, label);
+					break;
+			}
+		}
+		q = n.Next();
+	}
+}
 
 
 //--------------------------------------------------------------------------------------------------
@@ -1414,6 +1737,7 @@ function draw_tree(element)
     var svg_g_id = uniqueid();
     
 	var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+	svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
 	svg.setAttribute('id',svg_id);
 	svg.setAttribute('version','1.1');
 	svg.setAttribute('height',height);
@@ -1460,6 +1784,24 @@ function draw_tree(element)
 
 	td.CalcCoordinates();
 	td.Draw();
+	
+	var bbox = svg.getBBox();
+	
+	var scale = Math.min(width/bbox.width, height/bbox.height);
+	
+	var viewport = document.getElementById(svg_g_id);
+	viewport.setAttribute('transform', 'scale(' + scale + ')');
+	
+	// centre
+	bbox = svg.getBBox();
+		
+	if (bbox.x < 0)
+	{
+		var cw = (bbox.x + bbox.width/2) - width/2;
+		var ch = (bbox.y + bbox.height/2) - height/2;
+		viewport.setAttribute('transform', 'translate(' + -cw + ' ' + -ch + ')');
+	}
+	
 	
 }
 
