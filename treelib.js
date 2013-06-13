@@ -1805,3 +1805,41 @@ function draw_tree(element)
 	
 }
 
+//--------------------------------------------------------------------------------------------------
+function get_unique_labels(nexus, t) {
+	// label leaves...
+	var u = [];
+	var n = new NodeIterator(t.root);
+	var q = n.Begin();
+	while (q != null)
+	{
+		if (q.IsLeaf())
+		{
+			var label = q.label;
+			
+			if (nexus.treesblock.translate)
+			{
+				if (nexus.treesblock.translate[label])
+				{
+					label = nexus.treesblock.translate[label];
+				}
+			}
+			
+			/*
+			if (filter) {
+				var m = label.split(' ');
+				label = m[0];
+			}
+			*/
+			
+			if (u.indexOf(label) == -1)
+			{
+				u.push(label);
+			}
+		}
+		q = n.Next();
+	}
+	
+	return u;
+}
+

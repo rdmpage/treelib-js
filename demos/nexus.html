@@ -470,6 +470,57 @@ function showtree(element_id, drawing_type)
 				svg.appendChild(cssStyle);				
 				
 				td.DrawLabels(nexus);
+				
+				// get unique labels
+				var u = get_unique_labels(nexus, t, false);
+				
+				/*
+				if (u.length > 20) {	
+					u = get_unique_labels(nexus, t, true);
+				}
+				*/
+				
+				for (var i in u) {
+					console.log(u[i]);
+				}
+				
+				
+				// Colour scheme from d3js
+				// https://github.com/mbostock/d3/wiki/Ordinal-Scales
+				var category20c = ['#3182bd','#6baed6','#9ecae1','#c6dbef','#e6550d','#fd8d3c','#fdae6b','#fdd0a2','#31a354','#74c476','#a1d99b','#c7e9c0','#756bb1','#9e9ac8','#bcbddc','#dadaeb','#636363','#969696','#bdbdbd','#d9d9d9'];
+				
+				
+				// Get global transform matrix
+				gCTM = g.getCTM();
+				
+				// color stuff
+				$( "text" ).each(function( index ) {
+  					//console.log( index + ": " + $(this).text() );
+  					  					
+  					// idea from http://srufaculty.sru.edu/david.dailey/svg/getCTM.svg
+					SVGRect = this.getBBox();
+					
+					var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+						rect.setAttribute("x", SVGRect.x);
+						rect.setAttribute("y", SVGRect.y);
+						rect.setAttribute("width", SVGRect.width);
+						rect.setAttribute("height", SVGRect.height);
+						
+						var index = u.indexOf($(this).text()) % 20;
+						
+						var colour = category20c[index];
+						
+						rect.setAttribute("fill", colour);
+						rect.setAttribute("opacity", 0.5);
+						
+						CTM=this.getCTM();
+						s=CTM.a+" "+CTM.b+" "+CTM.c+" "+CTM.d+" "+CTM.e+" "+CTM.f;
+						rect.setAttributeNS(null,"transform","translate("+ -gCTM.e + "," + -gCTM.f + "),matrix("+s+")");
+						
+						g.insertBefore(rect, this);
+  					
+				});
+				
 							
 				// pan
 				$('svg').svgPan('viewport');
