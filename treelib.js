@@ -34,13 +34,20 @@ function linePath(p0, p1)
 //--------------------------------------------------------------------------------------------------
 function drawLine(svg_id, p0, p1)
 {
-	var line = document.createElementNS('http://www.w3.org/2000/svg','path');
-	//newLine.setAttribute('id','node' + p.id);
-	line.setAttribute('vector-effect','non-scaling-stroke');
-	line.setAttribute('style','stroke:black;stroke-width:1;');
-	line.setAttribute('d', linePath(p0, p1));
-	var svg = document.getElementById(svg_id);
-	svg.appendChild(line);
+	if ((p0['x'] == p1['x']) && (p0['y'] == p1['y']))
+	{
+	}
+	else
+	{
+		var line = document.createElementNS('http://www.w3.org/2000/svg','path');
+		//newLine.setAttribute('id','node' + p.id);
+		line.setAttribute('vector-effect','non-scaling-stroke');
+		line.setAttribute('stroke-linecap','square');
+		line.setAttribute('style','stroke:black;stroke-width:1;');
+		line.setAttribute('d', linePath(p0, p1));
+		var svg = document.getElementById(svg_id);
+		svg.appendChild(line);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -125,6 +132,7 @@ function drawCircleArc(svg_id, p0, p1, radius, large_arc_flag)
 {
 	var arc = document.createElementNS('http://www.w3.org/2000/svg','path');
 	arc.setAttribute('vector-effect','non-scaling-stroke');
+	arc.setAttribute('stroke-linecap','square');
 	arc.setAttribute('style','stroke:black;stroke-width:1;');
 	arc.setAttribute('fill','none');
 	
@@ -141,6 +149,7 @@ function drawPath(svg_id, pathString)
 	var path = document.createElementNS('http://www.w3.org/2000/svg','path');
 	//newLine.setAttribute('id','node' + p.id);
 	path.setAttribute('vector-effect','non-scaling-stroke');
+	path.setAttribute('stroke-linecap','square');
 	path.setAttribute('style','stroke:blue;stroke-width:1;');
 	path.setAttribute('d', pathString);
 	var svg = document.getElementById(svg_id);
