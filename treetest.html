@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	
+	<script src="treelib.js"></script>
+</head>
+<body>
+
+<h2>Compressed tree</h2>
+<div id="output" style="font-family: monospace;white-space: pre;line-height: 90%;">
+</div>
+
+<h2>Tree</h2>
+<div width="100%">
+	<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" height="500" width="500">
+		<g id="viewport">
+		</g>
+	</svg>
+</div>
+
+
+<script>
+
+var counter = 0;
+
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.FirstDescendant = function(p) {
+	this.curnode = p.child;
+	return this.curnode;
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.NextDescendant = function() {
+	this.curnode = this.curnode.sibling;
+	return this.curnode;
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.NextNonOGDescendant = function() {
+	var q = this.NextDescendant();
+	var done = false;
+	while (!done) {
+		if (!q) {
+			done = true;
+		}
+		if (!done) {
+			done = !q.marked;
+		}
+		if (!done) {
+			q = this.NextDescendant();
+		}
+	}
+	return q;
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.MarkPath = function(p) {
+	var q = p;
+	while (q) {
+		q.marked = true;
+		q = q.ancestor;
+	} 
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.UnMarkPath = function(p) {
+	var q = p;
+	while (q) {
+		q.marked = false;
+		q = q.ancestor;
+	} 
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.ListOtherDesc = function(p) {
+	var q = this.FirstDescendant(p);
+	if (q.marked) {
+		q = this.NextNonOGDescendant();
+	}
+	
+	console.log("NextNonOGDescendant=" + q.label);
+	
+	/*
+	if (this.add_there.IsLeaf() || this.add_there.child) {
+		this.add_there.sibling = q;
+		q.ancestor = this.add_there.ancestor;
+	} else {
+		this.add_there.child = q;
+		q.ancestor = this.add_there;
+	}
+	*/
+	
+	if (p != this.root) {
+		this.add_there.child = q;
+		q.ancestor = this.add_there;
+	} else {
+		this.add_there.sibling = q;
+		q.ancestor = this.add_there.ancestor;
+	}
+	
+	this.add_there = q;
+	console.log("q add_there=" + this.add_there.label);
+
+	q = this.NextNonOGDescendant();
+	while (q) {
+	
+		console.log("NextNonOGDescendant=" + q.label);
+	
+		this.add_there.sibling = q;
+		q.ancestor = this.add_there.ancestor;
+		this.add_there = q;
+		q = this.NextNonOGDescendant();
+	}
+	this.add_there.sibling = null;
+	
+	console.log("ListOtherDesc add_there=" + this.add_there.label);
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.ReRoot = function(outgroup, ingroup_edge, outgroup_edge) {
+	if (!outgroup || (outgroup == this.root)) {
+		return;
+	}
+	
+	if (outgroup.ancestor == this.root) {
+	
+		// if tree had no branch lengths we'd ignore this case, but
+		// for midpoint we may need to adjust edge lengths
+		
+		var ingroup = this.root.child;
+		if (ingroup == outgroup) {
+			ingroup = this.root.child.sibling;
+		}
+		
+		ingroup.edge_length = ingroup_edge;
+		outgroup.edge_length = outgroup_edge;
+	
+		return;
+	}
+	
+	this.MarkPath(outgroup);
+
+	var ingroup = new Node('ingroup');
+	ingroup.ancestor = outgroup.ancestor;
+	
+	this.add_there = ingroup;
+	var q = outgroup.ancestor;
+	
+	// Split outgroup edge length among out and ingroup (does this require things to be binary?)
+	//var half = outgroup.edge_length/2.0;
+	ingroup.edge_length = ingroup_edge;
+	outgroup.edge_length = outgroup_edge;
+	
+	while (q) {
+		console.log("ReRoot q=" + q.label);
+	
+		console.log('into ListOtherDesc');
+		this.ListOtherDesc(q);
+		console.log('outof ListOtherDesc');
+		
+		var previous_q = q;
+		q = q.ancestor;
+		
+		if (q && (q != this.root)) {
+			var p = new Node('x' + counter++);
+			this.add_there.sibling = p;
+			p.ancestor = this.add_there.ancestor;
+			
+			p.edge_length = previous_q.edge_length;
+			p.label = previous_q.label;
+			
+			this.add_there = p;
+		}
+	}
+	
+	outgroup.ancestor.child = outgroup;
+	outgroup.sibling = ingroup;
+	this.root = outgroup.ancestor;
+	
+	// cleanup
+	/*
+	q = Root->GetAnc();
+	while (q != NULL)
+	{
+		NodePtr p = q;
+		q = q->GetAnc ();
+		delete p;
+	}
+	*/
+	
+	this.root.ancestor = null;
+	this.root.sibling = null;
+
+	this.root.marked = false;
+	outgroup.marked = false;
+
+}
+
+
+
+
+
+
+//----------------------------------------------------------------------------------------
+function showtree(element_id, newick)
+{
+    var t = new Tree();
+    var element = document.getElementById(element_id);
+	t.Parse(newick);
+
+	if (t.error != 0)
+	{
+		//document.getElementById('message').innerHTML='Error parsing tree';
+	}
+	else
+	{
+		// rooting experiments
+		
+		console.log('tree at start=' + t.WriteNewick());
+		
+		var r = 'd';
+		r='e';
+		//r = 'GBCL1590713';
+		r = 'x';
+		r='';
+		
+		var outgroup = null;
+		var ingroup_edge = 0.0;
+		var outgroup_edge = 0.0;
+		
+		{
+			var counter = 0;
+			var leaf_list = [];
+			var n = new NodeIterator(t.root);
+			var q = n.Begin();
+			while (q != null)
+			{
+				if (q.IsLeaf())
+				{
+					leaf_list[counter++] = q;
+				}
+				q = n.Next();
+			}
+			
+			// get max pairwise distance
+			var max_pairwise = 0.0;
+			var from = -1;
+			var to = -1;
+			
+			for (var i = 1; i < counter; i++) {
+				for (var j = 0; j < i; j++) {
+					var p = leaf_list[i];
+					var q = leaf_list[j];
+					
+					t.MarkPath(p);
+					
+					var sum = 0.0;
+					while (q && !q.marked) {
+						sum += q.edge_length;
+						q = q.ancestor;
+					}
+					
+					while (p != q) {
+						sum += p.edge_length;
+						p = p.ancestor;
+					}
+					
+					t.UnMarkPath(leaf_list[i]);
+					
+					if (sum > max_pairwise) {
+						from = leaf_list[i];
+						to = leaf_list[j];
+						max_pairwise = sum;
+					}
+				}
+			}	
+			
+			
+			console.log("max_pairwise=" + max_pairwise + "[" + from.label + "," + to.label + "]");
+			
+			// where to split?
+			var half = max_pairwise/2.0;
+			
+			outgroup = null;
+			var path = 0.0;
+			
+			var path2 = 0.0;
+			
+			while ((path < half) && from) {
+				path2 = path;
+				path += from.edge_length;
+				outgroup = from;
+				from = from.ancestor;
+			}
+			
+			
+			if (path < half) {
+				path = 0.0;
+				path2 = 0.0;
+				while ((path < half) && to) {
+					path2 = path;
+					path += to.edge_length;
+					outgroup = to;
+					to = to.ancestor;
+				}
+			}
+			
+			{
+				var extra = path - half;
+				outgroup_edge = path - path2 - extra;
+				ingroup_edge = extra;
+			}
+			
+
+			
+		}
+		
+		//var outgroup = t.label_to_node_map['95107171'];
+		
+		if (outgroup) {
+		
+			outgroup.label = 'OUTGROUP';
+		
+			console.log("outgroup=" + outgroup.label);
+			
+			console.log('ingroup_edge=' + ingroup_edge + ', outgroup_edge=' + outgroup_edge);
+		
+			t.ReRoot(outgroup, ingroup_edge, outgroup_edge);
+		
+			console.log('tree at end=' + t.WriteNewick());
+		}
+	
+		//document.getElementById('message').innerHTML='Parsed OK';
+				
+		t.ComputeWeights(t.root);
+		
+		var td = null;
+		
+		var drawing_type = 'circlephylogram';
+		
+		switch (drawing_type)
+		{
+			case 'rectanglecladogram':
+				td = new RectangleTreeDrawer();
+				break;
+		
+			case 'phylogram':
+				if (t.has_edge_lengths)
+				{
+					td = new PhylogramTreeDrawer();
+				}
+				else
+				{
+					td = new RectangleTreeDrawer();
+				}
+				break;
+				
+			case 'circle':
+				td = new CircleTreeDrawer();
+				break;
+				
+			case 'circlephylogram':
+				if (t.has_edge_lengths)
+				{
+					td = new CirclePhylogramDrawer();
+				}
+				else
+				{
+					td = new CircleTreeDrawer();
+				}
+				break;
+				
+			case 'cladogram':
+			default:
+				td = new TreeDrawer();
+				break;
+		}
+		
+		// clear existing diagram, if any
+		var svg = document.getElementById('svg');
+		while (svg.hasChildNodes()) 
+		{
+			svg.removeChild(svg.lastChild);
+		}
+		
+		var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+		g.setAttribute('id','viewport');
+		svg.appendChild(g);
+				
+		td.Init(t, {svg_id: 'viewport', width:500, height:500, fontHeight:10, root_length:0.1} );
+		
+		td.CalcCoordinates();
+		td.Draw();
+		
+		// font size
+		var cssStyle = document.createElementNS('http://www.w3.org/2000/svg','style');
+		cssStyle.setAttribute('type','text/css');
+		
+		var font_size = Math.floor(td.settings.height/t.num_leaves);
+		font_size = Math.max(font_size, 1);
+		
+		var style=document.createTextNode("text{font-size:" + font_size + "px;}");
+		cssStyle.appendChild(style);
+		
+		svg.appendChild(cssStyle);
+
+		// label leaves...
+		var n = new NodeIterator(t.root);
+		var q = n.Begin();
+		while (q != null)
+		{
+			if (q.IsLeaf())
+			{
+				switch (drawing_type)
+				{
+					case 'circle':
+					case 'circlephylogram':
+						var align = 'left';
+						var angle = q.angle * 180.0/Math.PI;
+						if ((q.angle > Math.PI/2.0) && (q.angle < 1.5 * Math.PI))
+						{
+							align = 'right';
+							angle += 180.0;
+						}
+						drawRotatedText('viewport', q.xy, q.label, angle, align)
+						break;
+				
+					case 'cladogram':
+					case 'rectanglecladogram':
+					case 'phylogram':
+					default:				
+						drawText('viewport', q.xy, q.label);
+						break;
+				}
+			}
+			q = n.Next();
+		}
+	
+		// Scale to fit window
+		var bbox = svg.getBBox();
+		
+		var scale = Math.min(td.settings.width/bbox.width, td.settings.height/bbox.height);
+		
+		if ((drawing_type == 'circle') || (drawing_type == 'circlephylogram')) {
+			//scale *= 0.2;
+		} else {
+			scale *= 0.8;
+		}
+		
+		
+		// move drawing to centre of viewport
+		var viewport = document.getElementById('viewport');
+		viewport.setAttribute('transform', 'scale(' + scale + ')');
+		
+		// centre
+		bbox = svg.getBBox();
+		if (bbox.x < 0)
+		{
+			viewport.setAttribute('transform', 'translate(' + -bbox.x + ' ' + -bbox.y + ') scale(' + scale + ')');
+		}
+	}
+}
+
+newick = '(PNGTY184115_Polyacme_straminea_ab._brunneata:118.44091796875,((((PNGTY182715_Cassephyra_plenimargo:229.19140625,GWOSK39711:205.80859375):9.8466796875,((((GWOSH68810,GWOSG79010):10.7,GWOSH68510:9.3):71.27403846153845,GWOSH69510:140.72596153846155):38.7890625,GWOSH67010:143.7109375):76.5283203125):5.11181640625,((((GWOSC23810:281.38194444444446,ALYML39012_Pseudaletis_michelae:268.61805555555554):34.0087890625,(PNGTY184415_Sarcinodes_subvirgata:229.49184782608694,(QMA387713:246.0925925925926,UMGG05408_Pingasa_ruginaria:172.9074074074074):69.50815217391306):58.7412109375):13.275716145833334,(GWOSD73010:239.70138888888889,(((SUBHB39014,SUBHB39114):116.46551724137932,SUBHB42614:125.53448275862068):8.044642857142854,(((SUBHB43314,SUBHB43414),SUBHB43514):11.484848484848484,SUBHB42814:10.515151515151516):129.45535714285714):130.04861111111111):18.599283854166664):9.6689453125,((((GBGL1399314_Oedicentra_sp._19_TN2012:22.824324324324323,GBGL1400014_Oedicentra_sp._19_TN2012:35.17567567567568):208.72426470588235,GWOSF74310:252.27573529411765):19.249218749999997,(LBEOW143711,LBEOW143611):241.75078125):17.221540178571427,((GWOSI57310:306.85546875,((LBEOW135211:231.69078947368422,(GWOSI58210:292.3375,ALYML35912:311.6625):11.30921052631578):19.935267857142858,(GWOSB60510:226.94940476190476,(PNGTY183415_Grossbeckia_ochriplaga:305.51704545454544,LBEOW00110:257.48295454545456):11.05059523809524):37.68973214285714):13.58203125):3.9651988636363633,((GWOSC25710:144.87,LBEOA120011:159.13):84.62890625,GWOSC28110:255.37109375):30.816051136363637):16.723772321428573):17.5830078125):16.32568359375):3.70068359375,((GWOSD87810:195.3,GBGL1401114_Prasinocyma_sp.:197.7):18.84134615384616,(GBCL1590713:554.1315789473684,GBMOR84813_Agnotecous_sarramea:557.8684210526316)x:383.6586538461538):20.3681640625):118.44091796875);';
+
+newick = '(((FFMBH16914_Chondrostoma_soetta,FFMBH09614_Chondrostoma_soetta):8.27734375,(((FFMBH262214_Chondrostoma_knerii,FFMBH262114_Chondrostoma_knerii),FFMBH02814_Chondrostoma_knerii):1.173828125,(((((((((((((FFMBH189014_Pseudochondrostoma_duriense,FFMBH276914_Pseudochondrostoma_duriense):11.241477272727273,FFMBH276714_Pseudochondrostoma_duriense:-1.2414772727272734):0.6502976190476191,FFMBH275914_Pseudochondrostoma_duriense:-0.6502976190476191):0.34140625,FFMBH112014_Pseudochondrostoma_duriense:-0.34140625):0.1796875,FFMBH276314_Pseudochondrostoma_duriense:-0.1796875):0.09483506944444445,FFMBH275814_Pseudochondrostoma_duriense:-0.09483506944444445):0.05020680147058824,FFMBH112114_Pseudochondrostoma_duriense:-0.05020680147058824):0.02667236328125,FFMBH276814_Pseudochondrostoma_duriense:-0.02667236328125):0.014225260416666666,FFMBH112614_Pseudochondrostoma_duriense:-0.014225260416666666):41.820120675223215,(FFMBH109514_Pseudochondrostoma_willkommii,FFMBH203014_Pseudochondrostoma_willkommii):40.179879324776785):58.822575495793274,(((FFMBH245114_Parachondrostoma_miegii:23.98148148148148,(FFMBH246014_Parachondrostoma_miegii,FFMBH245914_Parachondrostoma_miegii):12.018518518518519):4.742788461538462,((FFMBH112514_Parachondrostoma_arrigonis,FFMBH269414_Parachondrostoma_arrigonis):5.6594827586206895,((FFMBH246314_Parachondrostoma_turiensis,FFMBH246114_Parachondrostoma_turiensis):0.20161290322580605,FFMBH246214_Parachondrostoma_turiensis:14.798387096774194):14.34051724137931):17.25721153846154):18.403750000000002,(FFMBH284214_Parachondrostoma_toxostoma:87.53030303030303,FFMBH239414_Parachondrostoma_miegii:44.46969696969697):41.97125):96.37005145733173):15.233113606770836,(((((FFMBH194914_Protochondrostoma_genei,FFMBH169514_Protochondrostoma_genei),FFMBH194314_Protochondrostoma_genei),FFMBH12214_Protochondrostoma_genei):0.2571428571428571,FFMBH12314_Protochondrostoma_genei:2.742857142857143):7.485294117647059,FFMBH194214_Protochondrostoma_genei:2.514705882352941)x:117.78385416666666):114.90980113636363,FFMBH198214_Chondrostoma_soetta:6.832386363636374):3.701171875):17.96484375):0.861328125,(((((FFMBH19114_Chondrostoma_soetta,FFMBH198414_Chondrostoma_soetta),FFMBH10014_Chondrostoma_soetta),FFMBH19314_Chondrostoma_soetta),FFMBH19214_Chondrostoma_soetta),FFMBH198314_Chondrostoma_soetta):0.861328125);';
+
+
+//newick = '((((PMANL375415:295.33984375,(GWOSK39711:192.6818181818182,GWOSH69210:183.3181818181818):23.66015625):12.9599609375,(((((GBGL1400214_Chloroclystis_sp.,GBGL1400114_Chloroclystis_sp.):197.875,GBCL1590713:911.125):39.18303571428571,GBGL1401114_Prasinocyma_sp.:228.81696428571428):10.389423076923066,((((EZCHB39209,EZCHB39109):9.280000000000001,EZCH48607:0.7199999999999989):3.0108695652173916,((((EZCH84107,EZCH83907),EZCH84007),EZCHB33709),EZCHB33809):6.989130434782608):4.454545454545455,(EZCHB35609:6.802083333333333,EZCHB35909:3.197916666666667):5.545454545454545):302.6730769230769):42.5125,((((LSAFA07313,LSAFA07013):243.19791666666669,(GWOSH68710:115.8452380952381,GWOSG82910:210.1547619047619):69.80208333333331):29.9453125,(((GBLAF00914,GWOSC27010),GBLAF01814):33.3125,GBLAF01214:84.6875):257.0546875):10.575520833333334,(LBEOA120011:224.728125,(PNGTY183415_Grossbeckia_ochriplaga:277.20625,GWOSC25810:195.79375):65.271875):28.736979166666664):12.487499999999997):10.9306640625):6.7705078125,(((LBEOA170312:209.09166666666667,GWOSC88310:216.90833333333333):23.401785714285715,(((GWOSC19910,PBEUP21411):45.68055555555556,(PBEUP21311:56.648648648648646,TBMOT169311:65.35135135135135):15.319444444444443):271.4921875,GWOSC26910:214.5078125):31.848214285714285):14.79296875,PMANL469415:195.20703125):9.1806640625):17.62451171875,(GWOSC24010:208.88194444444446,((PNGTY183115_Collix_ghosha:350.0833333333333,LBEOA121811:258.9166666666667):31.044117647058812,ACML56112_Celaenorrhinus_dargei:295.9558823529412):21.618055555555543):17.62451171875);';
+
+// tree with basal polytomy (breaks code)
+//newick = '((((95107171:0.00000228807965185344,(52546982:0.00000228807965185344,307090192:0.00000228807965185344):0.00118509614156684403):0.01254511503927074195,((95107165:0.00905914288104961440,52547020:0.00096453397251287779):0.00183214379488118935,52547022:0.00188732722151191282):0.00266788885119972115):0.00182411637671832166,(3790495:0.00193659398639430967,(95107167:0.00000228807965185344,(52547002:0.00000228807965185344,307090194:0.00000228807965185344):0.00446902401162186953):0.00162216525890236337):0.00189555666975794318)x:0.01706085838048194275,(27525932:0.00178199453723845323,33329899:0.00177685510533484125):0.00162656444396468451,33329897:0.00376114208011141173):0.0;';
+
+
+//newick = '(((((95107171:0.00000228807965185344,(52546982:0.00000228807965185344,307090192:0.00000228807965185344):0.00118509614156684403):0.01254511503927074195,((95107165:0.00905914288104961440,52547020:0.00096453397251287779):0.00183214379488118935,52547022:0.00188732722151191282):0.00266788885119972115):0.00182411637671832166,(3790495:0.00193659398639430967,(95107167:0.00000228807965185344,(52547002:0.00000228807965185344,307090194:0.00000228807965185344):0.00446902401162186953):0.00162216525890236337):0.00189555666975794318)x:0.01706085838048194275,(27525932:0.00178199453723845323,33329899:0.00177685510533484125):0.00162656444396468451):0,33329897:0.00376114208011141173):0.0;';
+
+// Doesn't get rerooted :(
+// http://iphylo.org/~rpage/phyloinformatics/blast/tmp/M2VZSCTV015.tre
+//newick='((((((((1:0.002496,(3:0.001581,5:0.003228):0.003922):0.002731,18:-0.004682):0.002887,((2:0.002382,6:0.002493):0.002393,10:-0.003969):0.001512):0.002959,(((((4:-0.000347,11:0.000347):0.000279,8:-0.000279):9.831e-05,9:-0.000191):0.000213,13:-0.000309):-2.725e-05,7:-0.000158):0.003205):0.000336,15:-0.000449):0.001366,30:6.661e-05):0.004853,(((12:0.000160,17:-0.000160):6.663e-06,14:-6.663e-06):0.000137,16:-0.000139):0.013102):0.024556,(((((19:-0.000317,(24:5.981e-05,(35:-0.003137,36:0.003137):0.003564):0.000369):0.000901,34:-0.001937):0.001927,(((((20:0.001949,21:0.004670):0.001162,(28:-2.908e-05,29:0.001685):0.005496):0.001079,32:-0.001743):0.003048,38:-0.002739):0.004256,((23:0.001643,26:6.565e-06):-1.713e-05,25:2.256e-05):0.002682):-0.000164):-0.000324,((((27:0.008874,31:-0.008874):0.013265,37:-0.004865):0.001283,33:-0.004701):0.001453,39:-0.003667):0.004135):0.001445,22:0.002306):0);';
+
+
+//newick = '(a:3,(b:2,(c:4,(d:1,e:4)f:1)g:2)h:1)root;';
+
+// Banza
+newick = '((((((1:0.003181,(2:0.020173,(3:0.004824,4:0.003941):0.013348):0.004084):0.011951,((5:0,6:0):0.028291,(7:0,8:0):0.031470):0.000672):0.007252,(((11:0.002641,12:0.002143):0.018060,((13:0.002093,14:0.002688):0.002807,(15:0.000473,16:0.000324):0.003169):0.016605):0.002041,((17:0.007032,18:0.008551):0.017162,19:0.025889):0.002026):0.014358):0.002074,(9:0.017669,10:0.014463):0.029122):0.029830,(21:0.000261,22:-0.000261):0.059528):0.007831,20:0.062228,(23:0.098848,24:0.100637):0.018084);';
+
+
+showtree('svg', newick);
+
+// compress draw
+    var t = new Tree();
+	t.Parse(newick);
+	
+	t.ComputeWeights(t.root);
+	
+	var a = t.CompressDraw();
+	
+	document.getElementById('output').innerHTML = a.join("<br/>");
+	
+	
+
+
+</script>
+
+</body>
+</html>
