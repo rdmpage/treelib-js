@@ -4,7 +4,7 @@
  *
  */
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/3019278/any-way-to-specify-the-base-of-math-log-in-javascript
 function log10(val) {
   return Math.log(val) / Math.LN10;
@@ -12,26 +12,26 @@ function log10(val) {
 
 // http://stackoverflow.com/questions/387707/whats-the-best-way-to-define-a-class-in-javascript
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
 function isNumber (o) {
   return ! isNaN (o-0);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function ctype_alnum (str)
 {
 	return (str.match(/^[a-z0-9]+$/i) != null);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function linePath(p0, p1)
 {
 	var path = 'M ' + p0['x'] + ' ' + p0['y'] + ' ' + p1['x'] + ' ' + p1['y'];
 	return path;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function drawLine(svg_id, p0, p1)
 {
 	if ((p0['x'] == p1['x']) && (p0['y'] == p1['y']))
@@ -50,7 +50,7 @@ function drawLine(svg_id, p0, p1)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function drawText(svg_id, p, string)
 {
 	var text = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -66,7 +66,7 @@ function drawText(svg_id, p, string)
 	svg.appendChild(text);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function drawRotatedText(svg_id, p, string, angle, align)
 {
 	var text = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -104,7 +104,7 @@ function drawRotatedText(svg_id, p, string, angle, align)
 	svg.appendChild(text);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function circeArcPath(p0, p1, radius, large_arc_flag)
 {
 	var path = 'M ' 
@@ -127,7 +127,7 @@ function circeArcPath(p0, p1, radius, large_arc_flag)
 	return path;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function drawCircleArc(svg_id, p0, p1, radius, large_arc_flag)
 {
 	var arc = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -143,7 +143,7 @@ function drawCircleArc(svg_id, p0, p1, radius, large_arc_flag)
 	svg.appendChild(arc);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function drawPath(svg_id, pathString)
 {
 	var path = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -156,7 +156,7 @@ function drawPath(svg_id, pathString)
 	svg.appendChild(path);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // Remove NEXUS-style string formatting, e.g. underscores
 function formatString(s)
 {
@@ -164,7 +164,7 @@ function formatString(s)
 	return s;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/894860/set-a-default-parameter-value-for-a-javascript-function
 function Node(label)
 {
@@ -175,18 +175,21 @@ function Node(label)
 	this.id = 0;
 	this.weight = 0;
 	this.xy = [];
+	this.backarc = [];
 	this.edge_length = 0.0;
 	this.path_length = 0.0;
-	this.depth = 0;
+	this.depth = 0;	
+	this.marked = false;	
+	this.data = {};	
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Node.prototype.IsLeaf = function() 
 {
 	return (!this.child);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Node.prototype.GetRightMostSibling = function() 
 {
 	var p = this;
@@ -197,7 +200,25 @@ Node.prototype.GetRightMostSibling = function()
 	return p;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+Node.prototype.GetDegree = function() 
+{
+	var degree = 0;
+	var p = this;
+	if (p.child) {
+		degree++;
+		
+		p = p.child;
+		while (p.sibling)
+		{
+			degree++;
+			p = p.sibling;
+		}
+	}
+	return degree;
+}
+
+//----------------------------------------------------------------------------------------
 function Tree()
 {
 	this.root = null;
@@ -207,10 +228,17 @@ function Tree()
 	this.nodes = [];
 	this.rooted = true;
 	this.has_edge_lengths = false;
+	
+	this.add_there = null;
+	this.curnode = null;
+	
+	this.line = [];
+	this.html = [];
+	
 	this.error = 0;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Tree.prototype.NewNode = function(label)
 {
 	var node = new Node(label);
@@ -225,7 +253,7 @@ Tree.prototype.NewNode = function(label)
 	return node;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Tree.prototype.Parse = function(str)
 {
 	str = str.replace('"', "");
@@ -246,8 +274,8 @@ Tree.prototype.Parse = function(str)
 	
 	var token = str.split("|");
 	
-	var curnode = this.NewNode();
-	this.root = curnode;
+	this.curnode = this.NewNode();
+	this.root = this.curnode;
 	
 	var state = 0;
 	var stack = [];
@@ -268,8 +296,8 @@ Tree.prototype.Parse = function(str)
 					
 					// to do: KML
 					
-					curnode.label = label;
-					this.label_to_node_map[label] = curnode;
+					this.curnode.label = label;
+					this.label_to_node_map[label] = this.curnode;
 					
 					i++;
 					state = 1;
@@ -286,8 +314,8 @@ Tree.prototype.Parse = function(str)
 						// to do: KML
 						
 				
-						curnode.label = label;
-						this.label_to_node_map[label] = curnode;
+						this.curnode.label = label;
+						this.label_to_node_map[label] = this.curnode;
 
 						i++;
 						state = 1;
@@ -333,7 +361,7 @@ Tree.prototype.Parse = function(str)
 						i++;
 						if (isNumber(token[i]))
 						{
-							curnode.edge_length = parseFloat(token[i]);
+							this.curnode.edge_length = parseFloat(token[i]);
 							this.has_edge_lengths = true;
 							i++;
 						}
@@ -341,7 +369,7 @@ Tree.prototype.Parse = function(str)
 						
 					case ',':
 						q = this.NewNode();
-						curnode.sibling = q;
+						this.curnode.sibling = q;
 						var c = stack.length;
 						if (c == 0)
 						{
@@ -351,18 +379,18 @@ Tree.prototype.Parse = function(str)
 						else
 						{
 							q.ancestor = stack[c - 1];
-							curnode = q;
+							this.curnode = q;
 							state = 0;
 							i++;
 						}
 						break;	
 						
 					case '(':
-						stack.push(curnode);
+						stack.push(this.curnode);
 						q = this.NewNode();
-						curnode.child = q;
-						q.ancestor = curnode;
-						curnode = q;
+						this.curnode.child = q;
+						q.ancestor = this.curnode;
+						this.curnode = q;
 						state = 0;
 						i++;
 						break;
@@ -375,7 +403,7 @@ Tree.prototype.Parse = function(str)
 						}
 						else
 						{
-							curnode = stack.pop();
+							this.curnode = stack.pop();
 							state = 3;
 							i++;
 						}
@@ -403,8 +431,8 @@ Tree.prototype.Parse = function(str)
 			case 3: // finishchildren
 				if (ctype_alnum(token[i].charAt(0)))
 				{
-					curnode.label = token[i];
-					this.label_to_node_map[token[i]] = curnode;
+					this.curnode.label = token[i];
+					this.label_to_node_map[token[i]] = this.curnode;
 					i++;
 				}
 				else
@@ -415,7 +443,7 @@ Tree.prototype.Parse = function(str)
 							i++;
 							if (isNumber(token[i]))
 							{
-								curnode.edge_length = parseFloat(token[i]);
+								this.curnode.edge_length = parseFloat(token[i]);
 								this.has_edge_lengths = true;
 								i++;
 							}
@@ -429,14 +457,14 @@ Tree.prototype.Parse = function(str)
 							}
 							else
 							{
-								curnode = stack.pop();
+								this.curnode = stack.pop();
 								i++;
 							}
 							break;
 							
 						case ',':
 							q = this.NewNode();
-							curnode.sibling = q;
+							this.curnode.sibling = q;
 							
 							if (stack.length == 0)
 							{
@@ -446,7 +474,7 @@ Tree.prototype.Parse = function(str)
 							else
 							{
 								q.ancestor = stack[stack.length - 1];
-								curnode = q;
+								this.curnode = q;
 								state = 0;
 								i++;
 							}
@@ -468,7 +496,7 @@ Tree.prototype.Parse = function(str)
 					
 }		
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Tree.prototype.ComputeWeights = function(p)
 {
 	if (p)
@@ -489,7 +517,7 @@ Tree.prototype.ComputeWeights = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Tree.prototype.ComputeDepths = function()
 {
 	for (var i in this.nodes)
@@ -509,44 +537,48 @@ Tree.prototype.ComputeDepths = function()
 }
 	
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Tree.prototype.WriteNewick = function()
 {
 	var newick = '';
 	
 	var stack = [];
-	var curnode = this.root;
+	this.curnode = this.root;
 	
-	while (curnode)
+	//if (typeof label !== undefined)	
+	
+	
+	
+	while (this.curnode)
 	{
-		//console.log(curnode.label);
-		if (curnode.child)
+		//console.log(this.curnode.label);
+		if (this.curnode.child)
 		{
 			newick += '(';
-			stack.push(curnode);
-			curnode = curnode.child;
+			stack.push(this.curnode);
+			this.curnode = this.curnode.child;
 		}
 		else
 		{
-			newick += curnode.label;
-			var length = curnode.edge_length;
+			newick += this.curnode.label;
+			var length = this.curnode.edge_length;
 			if (length)
 			{
 				newick += ':' + length;
 			}
 			
-			while (stack.length > 0 && curnode.sibling == null)
+			while (stack.length > 0 && this.curnode.sibling == null)
 			{
 				newick += ')';
-				curnode = stack.pop();
+				this.curnode = stack.pop();
 				
 				// internal node label and length
-				if (typeof curnode.label !== undefined)
+				if (typeof this.curnode.label !== undefined)
 				{
-					newick += curnode.label;
+					newick += this.curnode.label;
 				}
 				
-				var length = curnode.edge_length;
+				var length = this.curnode.edge_length;
 				if (length)
 				{
 					newick += ':' + length;
@@ -555,12 +587,12 @@ Tree.prototype.WriteNewick = function()
 			
 			if (stack.length == 0)
 			{
-				curnode = null;
+				this.curnode = null;
 			}
 			else
 			{
 				newick += ',';
-				curnode = curnode.sibling;
+				this.curnode = this.curnode.sibling;
 			}
 		}
 	}
@@ -571,8 +603,79 @@ Tree.prototype.WriteNewick = function()
 	//console.log(newick);
 }
 
+//----------------------------------------------------------------------------------------
+Tree.prototype.compresstraverse = function(p) {
+	if (p) {
+		q = p.ancestor;
+		
+		console.log(p.weight);
+		
+		var start = this.num_leaves - q.weight;
+		var stop  = this.num_leaves - p.weight;
+		var symbol = '';
+		
+		for (var i = start + 1; i < stop; i++) {
+			this.line[i] = '─';
+		}	
+		
+		if (p == q.child) {
+			if (q == this.root) {
+				symbol = '┌'; // ROOT
+			} else {
+				symbol = '┬'; // DOWN
+			}
+		} else {
+			if (p.sibling) {
+				symbol = '├'; // SIB
+			} else {
+				symbol = '└'; // BOT
+			}
+			
+			// We need to fill in any vertical branches
+			// below (i.e. to the left) of p. Such lines only exist
+			// if an ancestor of p's immediate ancestor has siblings.
+			while (q && (q != this.root)) {
+				if (q.sibling) {
+					var pos = this.num_leaves - q.ancestor.weight;
+					this.line[pos] = '│'; // VBAR;
+				}
+				q = q.ancestor;
+			}
+		}	
+		
+		this.line[start] = symbol;
+	
+		// If p is a leaf then we output the line buffer
+		if (p.IsLeaf()) {
+			this.html.push(this.line.join('') + ' ' + p.label);
+			for (var i = 0; i < this.num_leaves; i++) {
+				this.line[i] = ' ';
+			}			
+		}
+		  
+		// Traverse the rest of the tree
+		this.compresstraverse (p.child);
+		this.compresstraverse (p.sibling);
+	}
+}
 
-//--------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.CompressDraw = function() {
+	this.html = [];
+	for (var i = 0; i < this.num_leaves; i++) {
+		this.line[i] = ' ';
+	}
+	
+	this.compresstraverse(this.root.child);
+	
+	return this.html;
+}
+
+
+
+
+//----------------------------------------------------------------------------------------
 function NodeIterator(root)
 {
 	this.root = root;
@@ -580,7 +683,7 @@ function NodeIterator(root)
 	this.stack = [];
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NodeIterator.prototype.Begin = function() 
 {
 	this.cur = this.root;
@@ -592,7 +695,7 @@ NodeIterator.prototype.Begin = function()
 	return this.cur;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NodeIterator.prototype.Next = function() 
 {
 	if (this.stack.length == 0)
@@ -619,7 +722,7 @@ NodeIterator.prototype.Next = function()
 	return this.cur;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PreorderIterator.prototype = new NodeIterator;
 
 function PreorderIterator()
@@ -627,14 +730,14 @@ function PreorderIterator()
 	NodeIterator.apply(this, arguments)
 };
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PreorderIterator.prototype.Begin = function() 
 {
 	this.cur = this.root;
 	return this.cur;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PreorderIterator.prototype.Next = function() 
 {
 	if (this.cur.child)
@@ -662,7 +765,7 @@ PreorderIterator.prototype.Next = function()
 
 
 				
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function TreeDrawer()
 {
 	//this.t = tree;
@@ -677,7 +780,7 @@ function TreeDrawer()
 	this.draw_scale_bar = false;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.Init = function(tree, settings)
 {
 	this.t = tree;
@@ -699,7 +802,7 @@ TreeDrawer.prototype.Init = function(tree, settings)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.CalcInternal = function(p)
 {
 	var pt = [];
@@ -708,7 +811,7 @@ TreeDrawer.prototype.CalcInternal = function(p)
 	p.xy = pt;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.CalcLeaf = function(p)
 {
 	var pt = [];
@@ -722,7 +825,7 @@ TreeDrawer.prototype.CalcLeaf = function(p)
 	p.xy = pt;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.CalcNodeGap = function()
 {
 	if (this.t.rooted)
@@ -738,7 +841,7 @@ TreeDrawer.prototype.CalcNodeGap = function()
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.CalcCoordinates = function() 
 {
 	this.t.ComputeWeights(this.t.root);
@@ -764,7 +867,7 @@ TreeDrawer.prototype.CalcCoordinates = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.DrawLeaf = function(p)
 {
 	var p0 = p.xy
@@ -777,7 +880,7 @@ TreeDrawer.prototype.DrawLeaf = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.DrawInternal = function(p)
 {
 	var p0 = p.xy
@@ -789,7 +892,7 @@ TreeDrawer.prototype.DrawInternal = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.DrawRoot = function()
 {
 	var p0 = this.t.root.xy
@@ -801,7 +904,7 @@ TreeDrawer.prototype.DrawRoot = function()
 	drawLine(this.settings.svg_id, p0, p1);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.Draw = function() 
 {
 	var n = new NodeIterator(this.t.root);
@@ -824,7 +927,7 @@ TreeDrawer.prototype.Draw = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 TreeDrawer.prototype.DrawLabels = function(nexus)
 {
 	var nxs = typeof nexus !== 'undefined' ? nexus : null;
@@ -857,7 +960,7 @@ TreeDrawer.prototype.DrawLabels = function(nexus)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype = new TreeDrawer();
 
 function RectangleTreeDrawer()
@@ -867,7 +970,7 @@ function RectangleTreeDrawer()
 	this.max_depth = 0;
 };
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype.CalcInternal = function(p)
 {
 	var pt = [];
@@ -881,7 +984,7 @@ RectangleTreeDrawer.prototype.CalcInternal = function(p)
 	p.xy['y'] = pt['y'];
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype.CalcNodeGap = function()
 {
 	this.t.ComputeDepths();
@@ -898,7 +1001,7 @@ RectangleTreeDrawer.prototype.CalcNodeGap = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype.DrawLeaf = function(p)
 {
 	var p0 = p.xy
@@ -913,7 +1016,7 @@ RectangleTreeDrawer.prototype.DrawLeaf = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RectangleTreeDrawer.prototype.DrawInternal = function(p)
 {
 	var p0 = [];
@@ -944,7 +1047,7 @@ RectangleTreeDrawer.prototype.DrawInternal = function(p)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype = new RectangleTreeDrawer();
 
 function PhylogramTreeDrawer()
@@ -956,7 +1059,7 @@ function PhylogramTreeDrawer()
 };
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype.CalcInternal = function(p)
 {
 	var pt = [];
@@ -970,7 +1073,7 @@ PhylogramTreeDrawer.prototype.CalcInternal = function(p)
 	p.xy['y'] = pt['y'];
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype.CalcLeaf = function(p)
 {
 	var pt = [];
@@ -986,7 +1089,7 @@ PhylogramTreeDrawer.prototype.CalcLeaf = function(p)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype.CalcCoordinates = function() 
 {
 	this.max_path_length = 0;
@@ -1036,7 +1139,7 @@ PhylogramTreeDrawer.prototype.CalcCoordinates = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype.Draw = function() 
 {
 	// parent method
@@ -1049,7 +1152,7 @@ PhylogramTreeDrawer.prototype.Draw = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 PhylogramTreeDrawer.prototype.DrawScaleBar = function() 
 {
 	var p0 = [];
@@ -1073,7 +1176,7 @@ PhylogramTreeDrawer.prototype.DrawScaleBar = function()
 
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype = new RectangleTreeDrawer();
 
 function CircleTreeDrawer()
@@ -1087,13 +1190,13 @@ function CircleTreeDrawer()
 	this.root_length = 0;
 };
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.CalcInternalRadius = function(p)
 {
 	p.radius = this.node_gap * (this.t.root.depth - p.depth);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.CalcInternal = function(p)
 {	
 	var left_angle = p.child.angle;
@@ -1127,13 +1230,13 @@ CircleTreeDrawer.prototype.CalcInternal = function(p)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.CalcLeafRadius = function(p)
 {
 	p.radius = this.leaf_radius;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.CalcLeaf = function(p)
 {
 	p.angle = this.leaf_angle * this.leaf_count;
@@ -1151,7 +1254,7 @@ CircleTreeDrawer.prototype.CalcLeaf = function(p)
 
 		
 	
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.DrawLeaf = function(p)
 {
 	
@@ -1194,7 +1297,7 @@ CircleTreeDrawer.prototype.DrawLeaf = function(p)
 	
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.DrawInternal = function(p)
 {
 	var p0 = [];
@@ -1251,7 +1354,7 @@ CircleTreeDrawer.prototype.DrawInternal = function(p)
 	
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.DrawRoot = function()
 {
 	var p0 = this.t.root.xy
@@ -1263,7 +1366,7 @@ CircleTreeDrawer.prototype.DrawRoot = function()
 	drawLine(this.settings.svg_id, p0, p1);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.CalcCoordinates = function() 
 {
 	this.t.ComputeDepths();
@@ -1317,7 +1420,7 @@ CircleTreeDrawer.prototype.CalcCoordinates = function()
 	}
 }	
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.Draw = function() 
 {
 	// parent method
@@ -1328,7 +1431,7 @@ CircleTreeDrawer.prototype.Draw = function()
 	viewport.setAttribute('transform', 'translate(' + (this.settings.width + this.root_length)/2 + ' ' +  this.settings.height/2 + ')');
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CircleTreeDrawer.prototype.DrawLabels = function(nexus)
 {
 	var nxs = typeof nexus !== 'undefined' ? nexus : null;
@@ -1373,7 +1476,7 @@ CircleTreeDrawer.prototype.DrawLabels = function(nexus)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CirclePhylogramDrawer.prototype = new CircleTreeDrawer();
 
 function CirclePhylogramDrawer()
@@ -1385,19 +1488,19 @@ function CirclePhylogramDrawer()
 };
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CirclePhylogramDrawer.prototype.CalcInternalRadius = function(p)
 {
 	p.radius = this.root_length + (p.path_length / this.max_path_length) * (this.settings.width/2)
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CirclePhylogramDrawer.prototype.CalcLeafRadius = function(p)
 {
 	p.radius = this.root_length + (p.path_length / this.max_path_length) * (this.settings.width/2)
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CirclePhylogramDrawer.prototype.CalcCoordinates = function() 
 {
 	this.max_path_length = 0;
@@ -1449,7 +1552,7 @@ CirclePhylogramDrawer.prototype.CalcCoordinates = function()
 	}
 }	
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 CirclePhylogramDrawer.prototype.Draw = function() 
 {
 	// parent method
@@ -1460,7 +1563,7 @@ CirclePhylogramDrawer.prototype.Draw = function()
 	viewport.setAttribute('transform', 'translate(' + (this.settings.width + this.root_length)/2 + ' ' +  this.settings.height/2 + ')');
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype = new RectangleTreeDrawer();
 
 function RadialTreeDrawer()
@@ -1478,7 +1581,7 @@ function RadialTreeDrawer()
 
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.CalcInternal = function(p)
 {
 	// angle of this node
@@ -1514,12 +1617,12 @@ RadialTreeDrawer.prototype.CalcInternal = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.CalcLeaf = function(p)
 {
 }		
 	
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.DrawLeaf = function(p)
 {
 	var p0 = p.xy;
@@ -1527,7 +1630,7 @@ RadialTreeDrawer.prototype.DrawLeaf = function(p)
 	drawLine(this.settings.svg_id, p0, p1);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.DrawInternal = function(p)
 {
 	var p0 = p.xy;
@@ -1538,12 +1641,12 @@ RadialTreeDrawer.prototype.DrawInternal = function(p)
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.DrawRoot = function()
 {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.CalcCoordinates = function() 
 {
 	this.t.ComputeWeights(this.t.root);
@@ -1585,7 +1688,7 @@ RadialTreeDrawer.prototype.CalcCoordinates = function()
 	}
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 RadialTreeDrawer.prototype.DrawLabels = function(nexus)
 {
 	var nxs = typeof nexus !== 'undefined' ? nexus : null;
@@ -1632,7 +1735,7 @@ RadialTreeDrawer.prototype.DrawLabels = function(nexus)
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/3231459/create-unique-id-with-javascript
 function uniqueid(){
     // always start with a letter (for DOM friendlyness)
@@ -1649,7 +1752,7 @@ function uniqueid(){
     return (idstr);
 }	
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function draw_tree_labels(nexus, t, drawing_type) {
 	// label leaves...
 	var n = new NodeIterator(t.root);
@@ -1713,7 +1816,7 @@ function draw_tree_labels(nexus, t, drawing_type) {
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // Draw a tree using Newick tree description for tag "element"
 function draw_tree(element)
 {
@@ -1814,7 +1917,7 @@ function draw_tree(element)
 	
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function get_unique_labels(nexus, t) {
 	// label leaves...
 	var u = [];

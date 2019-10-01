@@ -5,13 +5,13 @@
  *
  */
  
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
 function isNumber (o) {
   return ! isNaN (o-0);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //https://raw.github.com/kvz/phpjs/master/functions/strings/strstr.js
 function strstr (haystack, needle, bool) {
   // http://kevin.vanzonneveld.net
@@ -41,7 +41,7 @@ function strstr (haystack, needle, bool) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 // https://github.com/kvz/phpjs/blob/master/functions/strings/strchr.js
 function strchr (haystack, needle, bool) {
   // http://kevin.vanzonneveld.net
@@ -57,7 +57,7 @@ function strchr (haystack, needle, bool) {
 var NEXUSPunctuation = "()[]{}/\\,;:=*'\"`+-";
 var NEXUSWhiteSpace  = "\n\r\t ";
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function TokenTypes(){} 
 TokenTypes.None 		= 0;
 TokenTypes.String 		= 1;
@@ -79,7 +79,7 @@ TokenTypes.Period 		= 16;
 TokenTypes.Backslash 	= 17;
 TokenTypes.QuotedString	= 18;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function NumberTokens(){}
 NumberTokens.start 		= 0;
 NumberTokens.sign 		= 1;
@@ -91,13 +91,13 @@ NumberTokens.exponent 	= 6;
 NumberTokens.bad 		= 7;
 NumberTokens.done 		= 8;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function StringTokens(){}
 StringTokens.ok 		= 0;
 StringTokens.quote 		= 1;
 StringTokens.done 		= 2;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function NexusError(){}
 NexusError.ok 			= 0;
 NexusError.nobegin 		= 1;
@@ -108,7 +108,7 @@ NexusError.noblockname 	= 5;
 NexusError.badblock	 	= 6;
 NexusError.nosemicolon	= 7;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function Scanner(str)
 {
 	this.error = 0;
@@ -120,7 +120,7 @@ function Scanner(str)
 	this.returnspace = false;
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Scanner.prototype.GetToken = function(returnspace)
 {		
 	this.returnspace = typeof returnspace !== 'undefined' ? returnspace : false;
@@ -236,7 +236,7 @@ Scanner.prototype.GetToken = function(returnspace)
 	return this.token;
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Scanner.prototype.ParseComment = function()
 {		
 	this.buffer = '';
@@ -251,7 +251,7 @@ Scanner.prototype.ParseComment = function()
 	console.log('[' + this.buffer + ']');
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Scanner.prototype.ParseNumber = function()
 {		
 	this.buffer = '';
@@ -326,7 +326,7 @@ Scanner.prototype.ParseNumber = function()
 	return true; 		
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Scanner.prototype.ParseString = function()
 {		
 	this.buffer = '';
@@ -374,7 +374,7 @@ Scanner.prototype.ParseString = function()
 	return (state == StringTokens.done) ? true : false;
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 Scanner.prototype.ParseToken = function()
 {
 	this.buffer = '';
@@ -395,10 +395,10 @@ Scanner.prototype.ParseToken = function()
 	return true;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NexusReader.prototype = new Scanner;
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function NexusReader()
 {
 	Scanner.apply(this, arguments);
@@ -407,7 +407,7 @@ function NexusReader()
 	this.nexusBlocks = ['taxa', 'trees'];
 };
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NexusReader.prototype.GetBlock = function()
 {
 	var blockname = '';
@@ -444,7 +444,7 @@ NexusReader.prototype.GetBlock = function()
 	return blockname.toLowerCase();
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NexusReader.prototype.GetCommand = function()
 {
 	var command = '';
@@ -471,7 +471,7 @@ NexusReader.prototype.GetCommand = function()
 	return command.toLowerCase();
 }
 	
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NexusReader.prototype.IsNexusFile = function()
 {
 	this.error = NexusError.ok;
@@ -489,7 +489,7 @@ NexusReader.prototype.IsNexusFile = function()
 	return nexus;
 }
 
-//----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 NexusReader.prototype.SkipCommand = function()
 {	
 	var t = null;
@@ -499,7 +499,7 @@ NexusReader.prototype.SkipCommand = function()
 	return this.error;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 function parse_nexus(str)
 {
 	var nexus = {};
