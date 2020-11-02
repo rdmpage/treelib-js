@@ -267,7 +267,8 @@ Tree.prototype.GetNodeByLabel = function(label)
 //----------------------------------------------------------------------------------------
 Tree.prototype.Parse = function(str)
 {
-	str = str.replace('"', "");
+	str = str.replace(/\"/g, "");
+	str = str.replace(/\'/g, "");
 
 	// Strip NEXUS-style comments
 	str = str.replace(/\[[^\[]+\]/g, "");
