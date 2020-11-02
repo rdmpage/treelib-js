@@ -1,8 +1,5 @@
 // midpoint rooting
 
-var counter = 0;
-
-
 //----------------------------------------------------------------------------------------
 Tree.prototype.FirstDescendant = function(p) {
 	this.curnode = p.child;
@@ -58,7 +55,7 @@ Tree.prototype.ListOtherDesc = function(p) {
 		q = this.NextNonOGDescendant();
 	}
 	
-	console.log("NextNonOGDescendant=" + q.label);
+	//console.log("NextNonOGDescendant=" + q.label);
 	
 	/*
 	if (this.add_there.IsLeaf() || this.add_there.child) {
@@ -79,12 +76,12 @@ Tree.prototype.ListOtherDesc = function(p) {
 	}
 	
 	this.add_there = q;
-	console.log("q add_there=" + this.add_there.label);
+	//console.log("q add_there=" + this.add_there.label);
 
 	q = this.NextNonOGDescendant();
 	while (q) {
 	
-		console.log("NextNonOGDescendant=" + q.label);
+		//console.log("NextNonOGDescendant=" + q.label);
 	
 		this.add_there.sibling = q;
 		q.ancestor = this.add_there.ancestor;
@@ -93,7 +90,7 @@ Tree.prototype.ListOtherDesc = function(p) {
 	}
 	this.add_there.sibling = null;
 	
-	console.log("ListOtherDesc add_there=" + this.add_there.label);
+	//console.log("ListOtherDesc add_there=" + this.add_there.label);
 }
 
 //----------------------------------------------------------------------------------------
@@ -118,6 +115,8 @@ Tree.prototype.ReRoot = function(outgroup, ingroup_edge, outgroup_edge) {
 		return;
 	}
 	
+	var counter = 0;
+	
 	this.MarkPath(outgroup);
 
 	var ingroup = new Node('ingroup');
@@ -132,11 +131,12 @@ Tree.prototype.ReRoot = function(outgroup, ingroup_edge, outgroup_edge) {
 	outgroup.edge_length = outgroup_edge;
 	
 	while (q) {
-		console.log("ReRoot q=" + q.label);
+		//console.log("ReRoot q=" + q.label);
 	
-		console.log('into ListOtherDesc');
+		//console.log('into ListOtherDesc');
+		
 		this.ListOtherDesc(q);
-		console.log('outof ListOtherDesc');
+		//console.log('outof ListOtherDesc');
 		
 		var previous_q = q;
 		q = q.ancestor;
@@ -174,5 +174,104 @@ Tree.prototype.ReRoot = function(outgroup, ingroup_edge, outgroup_edge) {
 	this.root.marked = false;
 	outgroup.marked = false;
 
+}
+
+//----------------------------------------------------------------------------------------
+Tree.prototype.MidpointRoot = function() {
+
+	var outgroup = null;
+	var ingroup_edge = 0.0;
+	var outgroup_edge = 0.0;
+
+	// get list of all leaves
+	var counter = 0;
+	var leaf_list = [];
+	var n = new NodeIterator(this.root);
+	var q = n.Begin();
+	while (q != null)
+	{
+		if (q.IsLeaf())
+		{
+			leaf_list[counter++] = q;
+		}
+		q = n.Next();
+	}
+
+	// get max pairwise distance between leaves
+	var max_pairwise = 0.0;
+	var from = -1;
+	var to = -1;
+
+	for (var i = 1; i < counter; i++) {
+		for (var j = 0; j < i; j++) {
+			var p = leaf_list[i];
+			var q = leaf_list[j];
+		
+			this.MarkPath(p);
+		
+			var sum = 0.0;
+			while (q && !q.marked) {
+				sum += q.edge_length;
+				q = q.ancestor;
+			}
+		
+			while (p != q) {
+				sum += p.edge_length;
+				p = p.ancestor;
+			}
+		
+			this.UnMarkPath(leaf_list[i]);
+		
+			if (sum > max_pairwise) {
+				from = leaf_list[i];
+				to = leaf_list[j];
+				max_pairwise = sum;
+			}
+		}
+	}	
+
+	//console.log("max_pairwise=" + max_pairwise + "[" + from.label + "," + to.label + "]");
+
+	// find where where split the tree?
+	var half = max_pairwise/2.0;
+
+	outgroup = null;
+	
+	var path_one = 0.0;
+	var path_two = 0.0;
+
+	while ((path_one < half) && from) {
+		path_two = path_one;
+		path_one += from.edge_length;
+		outgroup = from;
+		from = from.ancestor;
+	}
+
+	if (path_one < half) {
+		path_one = 0.0;
+		path_two = 0.0;
+		while ((path_one < half) && to) {
+			path_two = path_one;
+			path_one += to.edge_length;
+			outgroup = to;
+			to = to.ancestor;
+		}
+	}
+
+	var extra = path_one - half;
+	outgroup_edge = path_one - path_two - extra;
+	ingroup_edge = extra;
+
+
+	if (outgroup) {
+
+		outgroup.label = 'OUTGROUP';
+		// console.log("outgroup=" + outgroup.label);	
+		// console.log('ingroup_edge=' + ingroup_edge + ', outgroup_edge=' + outgroup_edge);
+
+		this.ReRoot(outgroup, ingroup_edge, outgroup_edge);
+
+		//console.log('tree at end=' + this.WriteNewick());
+	}
 }
 
