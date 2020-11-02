@@ -105,7 +105,7 @@ function drawRotatedText(svg_id, p, string, angle, align)
 }
 
 //----------------------------------------------------------------------------------------
-function circeArcPath(p0, p1, radius, large_arc_flag)
+function circeArcPath(p0, p1, radius, large_arc_flag, sweep_flag)
 {
 	var path = 'M ' 
 		+ p0['x'] + ' ' + p0['y'] 
@@ -121,11 +121,14 @@ function circeArcPath(p0, p1, radius, large_arc_flag)
 		path += ' 0 ';
 	}
 	
-	path += ' 1 '
-	 + p1['x'] + ' ' + p1['y'] ;
+	sweep_flag = (typeof sweep_flag !== 'undefined') ?  sweep_flag : 1;
+	path += ' ' + sweep_flag + ' ';
+
+	path += p1['x'] + ' ' + p1['y'] ;
 
 	return path;
 }
+
 
 //----------------------------------------------------------------------------------------
 function drawCircleArc(svg_id, p0, p1, radius, large_arc_flag)
@@ -249,6 +252,14 @@ Tree.prototype.NewNode = function(label)
 	{
 		this.label_to_node_map[label] = node.id;
 	}
+	
+	return node;
+}
+
+//--------------------------------------------------------------------------------------------------
+Tree.prototype.GetNodeByLabel = function(label)
+{
+	var node = this.label_to_node_map[label];
 	
 	return node;
 }
@@ -1753,7 +1764,7 @@ function uniqueid(){
 }	
 
 //----------------------------------------------------------------------------------------
-function draw_tree_labels(nexus, t, drawing_type) {
+function draw_tree_labels(nexus, t, td, drawing_type) {
 	// label leaves...
 	var n = new NodeIterator(t.root);
 	var q = n.Begin();
@@ -1763,11 +1774,13 @@ function draw_tree_labels(nexus, t, drawing_type) {
 		{
 			var label = q.label;
 			
-			if (nexus.treesblock.translate)
-			{
-				if (nexus.treesblock.translate[label])
+			if (nexus) {
+				if (nexus.treesblock.translate)
 				{
-					label = nexus.treesblock.translate[label];
+					if (nexus.treesblock.translate[label])
+					{
+						label = nexus.treesblock.translate[label];
+					}
 				}
 			}
 			
